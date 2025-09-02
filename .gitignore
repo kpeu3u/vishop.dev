@@ -1,38 +1,38 @@
 
 ###> symfony/framework-bundle ###
-/.env.local
-/.env.local.php
-/.env.*.local
-/config/secrets/prod/prod.decrypt.private.php
-/public/bundles/
-/public/build/fonts/glyphicons-*
-/public/build/images/glyphicons-*
-/var/
-/vendor/
+/api/.env.local
+/api/.env.local.php
+/api/.env.*.local
+/api/config/secrets/prod/prod.decrypt.private.php
+/api/public/bundles/
+/api/public/build/fonts/glyphicons-*
+/api/public/build/images/glyphicons-*
+/api/var/
+/api/vendor/
 ###< symfony/framework-bundle ###
 
 ###> lexik/jwt-authentication-bundle ###
-/config/jwt/*.pem
+/api/config/jwt/*.pem
 ###< lexik/jwt-authentication-bundle ###
 
 ###> friendsofphp/php-cs-fixer ###
-/.php-cs-fixer.php
-/.php-cs-fixer.cache
+/api/.php-cs-fixer.php
+/api/.php-cs-fixer.cache
 ###< friendsofphp/php-cs-fixer ###
 
 ###> phpunit/phpunit ###
-/phpunit.xml
-/.phpunit.cache/
-.phpunit.result.cache
+/api/phpunit.xml
+/api/.phpunit.cache/
+/api.phpunit.result.cache
 ###< phpunit/phpunit ###
 
 ###> symfony/asset-mapper ###
-/public/assets/
-/assets/vendor/
+/api/public/assets/
+/api/assets/vendor/
 ###< symfony/asset-mapper ###
 
 ###> phpstan/phpstan ###
-phpstan.neon
+/api/phpstan.neon
 ###< phpstan/phpstan ###
 
 ### Example user template template
@@ -43,13 +43,3 @@ phpstan.neon
 *.iml
 out
 gen
-
-###> liip/imagine-bundle ###
-/public/media/cache/
-###< liip/imagine-bundle ###
-
-###> html ###
-/templates/html/
-###< html ###
-
-/docs/
