@@ -123,11 +123,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->roles = $roles;
     }
 
-    public function getSalt(): ?string
-    {
-        return null;
-    }
-
     /**
      * Removes sensitive data from the user.
      *
@@ -199,5 +194,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->isActive = $isActive;
 
         return $this;
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return \in_array($role, $this->getRoles(), true);
+    }
+
+    public function isMerchant(): bool
+    {
+        return $this->hasRole(self::ROLE_MERCHANT);
+    }
+
+    public function isBuyer(): bool
+    {
+        return $this->hasRole(self::ROLE_BUYER);
     }
 }
