@@ -38,7 +38,6 @@ const Navigation = observer(() => {
                             )}
 
                             <div className="user-menu">
-                                <span>Welcome, {auth.user?.fullName}</span>
                                 <Link to="/profile">Profile</Link>
                                 <button onClick={handleLogout} className="logout-btn">
                                     Logout

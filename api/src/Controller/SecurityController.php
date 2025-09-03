@@ -19,7 +19,7 @@ class SecurityController extends AbstractController
         // This method will never be executed because JWT handles it
 
         return new JsonResponse([
-            'message' => 'Login endpoint - should not reach here'
+            'message' => 'Login endpoint - should not reach here',
         ], 400);
     }
 

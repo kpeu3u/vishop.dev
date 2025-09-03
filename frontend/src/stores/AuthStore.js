@@ -97,6 +97,12 @@ class AuthStore {
         }
     }
 
+    updateUser(userData) {
+        this.user = userData;
+        localStorage.setItem('user_data', JSON.stringify(userData));
+    }
+
+
     clearError() {
         this.error = null;
     }

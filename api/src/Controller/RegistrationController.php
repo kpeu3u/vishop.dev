@@ -3,12 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Form\RegistrationFormType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -21,7 +19,7 @@ class RegistrationController extends AbstractController
         Request $request,
         UserPasswordHasherInterface $passwordHasher,
         EntityManagerInterface $entityManager,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
 
@@ -34,7 +32,7 @@ class RegistrationController extends AbstractController
         $user->setFullName($data['fullName'] ?? '');
 
         // Set roles
-        if (isset($data['roles']) && is_array($data['roles'])) {
+        if (isset($data['roles']) && \is_array($data['roles'])) {
             $user->setRoles($data['roles']);
         } else {
             $user->setRoles([User::ROLE_BUYER]); // Default role
@@ -51,11 +49,12 @@ class RegistrationController extends AbstractController
 
         // Validate user
         $errors = $validator->validate($user);
-        if (count($errors) > 0) {
+        if (\count($errors) > 0) {
             $errorMessages = [];
             foreach ($errors as $error) {
                 $errorMessages[] = $error->getMessage();
             }
+
             return $this->json(['errors' => $errorMessages], 400);
         }
 
@@ -70,11 +69,10 @@ class RegistrationController extends AbstractController
                     'email' => $user->getEmail(),
                     'fullName' => $user->getFullName(),
                     'roles' => $user->getRoles(),
-                ]
+                ],
             ], 201);
         } catch (\Exception $e) {
             return $this->json(['error' => 'Registration failed'], 500);
         }
     }
 }
-

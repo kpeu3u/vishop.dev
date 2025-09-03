@@ -5,6 +5,7 @@ import Navigation from './components/layout/Navigation';
 import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import ProfilePage from './components/profile/ProfilePage';
 import './App.css';
 
 // Example dashboard component
@@ -49,6 +50,15 @@ function App() {
                                 element={
                                     <ProtectedRoute>
                                         <Dashboard />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            
+                            <Route
+                                path="/profile"
+                                element={
+                                    <ProtectedRoute>
+                                        <ProfilePage />
                                     </ProtectedRoute>
                                 }
                             />
