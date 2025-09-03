@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import {BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom';
 import { Container, Row, Col } from 'react-bootstrap';
 import { AuthProvider } from './contexts/AuthContext';
 import Navigation from './components/layout/Navigation';
@@ -9,10 +9,17 @@ import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
 import ResetPasswordForm from './components/auth/ResetPasswordForm';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ProfilePage from './components/profile/ProfilePage';
+
+// Product Components
+import ProductList from './components/products/ProductList';
+import ProductDetail from './components/products/ProductDetail';
+import ProductForm from './components/products/ProductForm';
+import MyProducts from './components/products/MyProducts';
+import FollowedProducts from './components/products/FollowedProducts';
+
 import './App.css';
 
-// Example dashboard component
-// Example components
+// Dashboard component
 const Dashboard = () => (
     <Container className="my-4">
         <Row>
@@ -36,12 +43,10 @@ const Home = () => (
                         Your premier vehicle shopping destination
                     </p>
                     <div className="d-flex gap-3 justify-content-center">
-                        <button className="btn btn-primary btn-lg px-4">
+                        <Link to="/products" className="btn btn-primary btn-lg px-4 text-decoration-none">
                             Browse Vehicles
-                        </button>
-                        <button className="btn btn-outline-primary btn-lg px-4">
-                            Learn More
-                        </button>
+                        </Link>
+
                     </div>
                 </Col>
             </Row>
@@ -52,7 +57,7 @@ const Home = () => (
                 <Col md={4}>
                     <div className="text-center">
                         <div className="bg-primary bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
-                            <i className="bi bi-car-front fs-1 text-primary"></i>
+                            <i className="bi bi-car-front fs-1 text-primary" style={{ padding: '0 10px' }}></i>
                         </div>
                         <h4>Quality Vehicles</h4>
                         <p className="text-muted">
@@ -63,7 +68,7 @@ const Home = () => (
                 <Col md={4}>
                     <div className="text-center">
                         <div className="bg-success bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
-                            <i className="bi bi-shield-check fs-1 text-success"></i>
+                            <i className="bi bi-shield-check fs-1 text-success" style={{ padding: '0 10px' }}></i>
                         </div>
                         <h4>Trusted Sellers</h4>
                         <p className="text-muted">
@@ -74,7 +79,7 @@ const Home = () => (
                 <Col md={4}>
                     <div className="text-center">
                         <div className="bg-info bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
-                            <i className="bi bi-lightning fs-1 text-info"></i>
+                            <i className="bi bi-lightning fs-1 text-info" style={{ padding: '0 10px' }}></i>
                         </div>
                         <h4>Fast & Easy</h4>
                         <p className="text-muted">
@@ -115,6 +120,10 @@ function App() {
                             <Route path="/reset-password" element={<ResetPasswordForm />} />
                             <Route path="/unauthorized" element={<Unauthorized />} />
 
+                            {/* Public Product Routes */}
+                            <Route path="/products" element={<ProductList />} />
+                            <Route path="/products/:id" element={<ProductDetail />} />
+
                             {/* Protected routes */}
                             <Route
                                 path="/dashboard"
@@ -136,29 +145,45 @@ function App() {
 
                             {/* Merchant-only routes */}
                             <Route
-                                path="/add-vehicle"
+                                path="/products/new"
                                 element={
                                     <ProtectedRoute requiredRole="ROLE_MERCHANT">
-                                        <Container className="my-4">
-                                            <h2>Add Vehicle Form (Merchant Only)</h2>
-                                            <p>This is a merchant-only page.</p>
-                                        </Container>
+                                        <ProductForm />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            
+                            <Route
+                                path="/products/:id/edit"
+                                element={
+                                    <ProtectedRoute requiredRole="ROLE_MERCHANT">
+                                        <ProductForm />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            
+                            <Route
+                                path="/my-products"
+                                element={
+                                    <ProtectedRoute requiredRole="ROLE_MERCHANT">
+                                        <MyProducts />
                                     </ProtectedRoute>
                                 }
                             />
 
                             {/* Buyer-only routes */}
                             <Route
-                                path="/favorites"
+                                path="/followed"
                                 element={
                                     <ProtectedRoute requiredRole="ROLE_BUYER">
-                                        <Container className="my-4">
-                                            <h2>Favorites Page (Buyer Only)</h2>
-                                            <p>This is a buyer-only page.</p>
-                                        </Container>
+                                        <FollowedProducts />
                                     </ProtectedRoute>
                                 }
                             />
+
+                            {/* Legacy route redirects */}
+                            <Route path="/add-vehicle" element={<ProtectedRoute requiredRole="ROLE_MERCHANT"><ProductForm /></ProtectedRoute>} />
+                            <Route path="/favorites" element={<ProtectedRoute requiredRole="ROLE_BUYER"><FollowedProducts /></ProtectedRoute>} />
                         </Routes>
                     </main>
 

@@ -37,7 +37,17 @@ const Navigation = observer(() => {
                                 `nav-link ${isActive ? 'active' : ''}`
                             }
                         >
+                            <i className="bi bi-house me-1"></i>
                             Home
+                        </NavLink>
+                        <NavLink
+                            to="/products"
+                            className={({ isActive }) =>
+                                `nav-link ${isActive ? 'active' : ''}`
+                            }
+                        >
+                            <i className="bi bi-car-front me-1"></i>
+                            Browse Products
                         </NavLink>
                         
                         {isAuthenticated && (
@@ -51,26 +61,41 @@ const Navigation = observer(() => {
                                     Dashboard
                                 </NavLink>
                                 
-                                {user?.roles?.includes('ROLE_MERCHANT') && (
-                                    <NavLink 
-                                        to="/add-vehicle" 
-                                        className={({ isActive }) => 
-                                            `nav-link ${isActive ? 'active' : ''}`
-                                        }
-                                    >
-                                        Add Vehicle
-                                    </NavLink>
+                                {authStore.isMerchant() && (
+                                    <>
+                                        <NavLink 
+                                            to="/products/new"
+                                            className={({ isActive }) => 
+                                                `nav-link ${isActive ? 'active' : ''}`
+                                            }
+                                        >
+                                            <i className="bi bi-plus-lg me-1"></i>
+                                            Add Vehicle
+                                        </NavLink>
+                                        <NavLink
+                                            to="/my-products"
+                                            className={({ isActive }) =>
+                                                `nav-link ${isActive ? 'active' : ''}`
+                                            }
+                                        >
+                                                <i className="bi bi-box me-1"></i>
+                                                My Products
+                                        </NavLink>
+                                    </>
                                 )}
                                 
-                                {user?.roles?.includes('ROLE_BUYER') && (
-                                    <NavLink 
-                                        to="/favorites" 
-                                        className={({ isActive }) => 
-                                            `nav-link ${isActive ? 'active' : ''}`
-                                        }
-                                    >
-                                        Favorites
-                                    </NavLink>
+                                {authStore.isBuyer() && (
+                                    <>
+                                        <NavLink 
+                                            to="/followed"
+                                            className={({ isActive }) => 
+                                                `nav-link ${isActive ? 'active' : ''}`
+                                            }
+                                        >
+                                            <i className="bi bi-heart me-1"></i>
+                                            Followed
+                                        </NavLink>
+                                    </>
                                 )}
                             </>
                         )}

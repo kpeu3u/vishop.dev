@@ -1,5 +1,5 @@
-import { makeAutoObservable } from 'mobx';
-import { api } from '../services/api';
+import { makeAutoObservable, runInAction } from 'mobx';
+import { productAPI } from '../services/api';
 
 class ProductStore {
     products = [];
@@ -17,149 +17,200 @@ class ProductStore {
 
     // Actions
     async loadProducts(filters = {}) {
-        this.isLoading = true;
-        this.error = null;
+        runInAction(() => {
+            this.isLoading = true;
+            this.error = null;
+        });
 
         try {
-            const params = new URLSearchParams();
-            Object.keys(filters).forEach(key => {
-                if (filters[key] !== '' && filters[key] !== null && filters[key] !== undefined) {
-                    params.append(key, filters[key]);
-                }
+            const response = await productAPI.getProducts(filters);
+            runInAction(() => {
+                this.products = response.products;
+                this.isLoading = false;
             });
-
-            const response = await api.get(`/products${params.toString() ? `?${params.toString()}` : ''}`);
-            this.products = response.products;
-            this.isLoading = false;
         } catch (error) {
-            this.handleError(error);
-            this.isLoading = false;
+            runInAction(() => {
+                this.handleError(error);
+                this.isLoading = false;
+            });
         }
     }
 
     async searchProducts(searchTerm) {
-        this.isLoading = true;
-        this.error = null;
+        runInAction(() => {
+            this.isLoading = true;
+            this.error = null;
+        });
 
         try {
-            const response = await api.get(`/products/search?q=${encodeURIComponent(searchTerm)}`);
-            this.products = response.products;
-            this.isLoading = false;
+            const response = await productAPI.searchProducts(searchTerm);
+            runInAction(() => {
+                this.products = response.products;
+                this.isLoading = false;
+            });
         } catch (error) {
-            this.handleError(error);
-            this.isLoading = false;
+            runInAction(() => {
+                this.handleError(error);
+                this.isLoading = false;
+            });
         }
     }
 
     async loadProduct(id) {
-        this.isLoading = true;
-        this.error = null;
-        this.currentProduct = null;
+        runInAction(() => {
+            this.isLoading = true;
+            this.error = null;
+            this.currentProduct = null;
+        });
 
         try {
-            const response = await api.get(`/products/${id}`);
-            this.currentProduct = response.product;
-            this.isLoading = false;
+            const response = await productAPI.getProduct(id);
+            runInAction(() => {
+                this.currentProduct = response.product;
+                this.isLoading = false;
+            });
         } catch (error) {
-            this.handleError(error);
-            this.isLoading = false;
+            runInAction(() => {
+                this.handleError(error);
+                this.isLoading = false;
+            });
         }
     }
 
     async createProduct(productData) {
-        this.isLoading = true;
-        this.error = null;
-        this.validationErrors = {};
-        this.successMessage = null;
+        runInAction(() => {
+            this.isLoading = true;
+            this.error = null;
+            this.validationErrors = {};
+            this.successMessage = null;
+        });
 
         try {
-            const response = await api.post('/products', productData);
+            const response = await productAPI.createProduct(productData);
             if (response.success) {
-                this.successMessage = 'Product created successfully';
+                runInAction(() => {
+                    this.successMessage = 'Product created successfully';
+                    this.isLoading = false;
+                });
                 this.loadMyProducts(); // Refresh merchant's products
                 return { success: true, product: response.product };
             }
         } catch (error) {
-            this.handleError(error);
+            runInAction(() => {
+                this.handleError(error);
+                this.isLoading = false;
+            });
         }
 
-        this.isLoading = false;
+        runInAction(() => {
+            this.isLoading = false;
+        });
         return { success: false };
     }
 
     async updateProduct(id, productData) {
-        this.isLoading = true;
-        this.error = null;
-        this.validationErrors = {};
-        this.successMessage = null;
+        runInAction(() => {
+            this.isLoading = true;
+            this.error = null;
+            this.validationErrors = {};
+            this.successMessage = null;
+        });
 
         try {
-            const response = await api.put(`/products/${id}`, productData);
+            const response = await productAPI.updateProduct(id, productData);
             if (response.success) {
-                this.successMessage = 'Product updated successfully';
+                runInAction(() => {
+                    this.successMessage = 'Product updated successfully';
+                    if (this.currentProduct && this.currentProduct.id === id) {
+                        this.currentProduct = response.product;
+                    }
+                    this.isLoading = false;
+                });
                 this.loadMyProducts(); // Refresh merchant's products
-                if (this.currentProduct && this.currentProduct.id === id) {
-                    this.currentProduct = response.product;
-                }
                 return { success: true, product: response.product };
             }
         } catch (error) {
-            this.handleError(error);
+            runInAction(() => {
+                this.handleError(error);
+                this.isLoading = false;
+            });
         }
 
-        this.isLoading = false;
+        runInAction(() => {
+            this.isLoading = false;
+        });
         return { success: false };
     }
 
     async deleteProduct(id) {
-        this.isLoading = true;
-        this.error = null;
+        runInAction(() => {
+            this.isLoading = true;
+            this.error = null;
+        });
 
         try {
-            const response = await api.delete(`/products/${id}`);
+            const response = await productAPI.deleteProduct(id);
             if (response.success) {
-                this.successMessage = 'Product deleted successfully';
+                runInAction(() => {
+                    this.successMessage = 'Product deleted successfully';
+                    // Remove from products list if it's there
+                    this.products = this.products.filter(p => p.id !== id);
+                    this.isLoading = false;
+                });
                 this.loadMyProducts(); // Refresh merchant's products
-                // Remove from products list if it's there
-                this.products = this.products.filter(p => p.id !== id);
                 return { success: true };
             }
         } catch (error) {
-            this.handleError(error);
+            runInAction(() => {
+                this.handleError(error);
+                this.isLoading = false;
+            });
         }
 
-        this.isLoading = false;
+        runInAction(() => {
+            this.isLoading = false;
+        });
         return { success: false };
     }
 
     async loadMyProducts() {
-        this.isLoading = true;
-        this.error = null;
+        runInAction(() => {
+            this.isLoading = true;
+            this.error = null;
+        });
 
         try {
-            const response = await api.get('/products/my-products');
-            this.myProducts = response.products;
-            this.isLoading = false;
+            const response = await productAPI.getMyProducts();
+            runInAction(() => {
+                this.myProducts = response.products;
+                this.isLoading = false;
+            });
         } catch (error) {
-            this.handleError(error);
-            this.isLoading = false;
+            runInAction(() => {
+                this.handleError(error);
+                this.isLoading = false;
+            });
         }
     }
 
     async followProduct(id) {
         try {
-            const response = await api.post(`/products/${id}/follow`);
+            const response = await productAPI.followProduct(id);
             if (response.success) {
-                this.successMessage = 'Product followed successfully';
-                // Update current product if it's loaded
-                if (this.currentProduct && this.currentProduct.id === id) {
-                    this.currentProduct.isFollowed = true;
-                    this.currentProduct.followersCount += 1;
-                }
+                runInAction(() => {
+                    this.successMessage = 'Product followed successfully';
+                    // Update current product if it's loaded
+                    if (this.currentProduct && this.currentProduct.id === id) {
+                        this.currentProduct.isFollowed = true;
+                        this.currentProduct.followersCount += 1;
+                    }
+                });
                 return { success: true };
             }
         } catch (error) {
-            this.handleError(error);
+            runInAction(() => {
+                this.handleError(error);
+            });
         }
 
         return { success: false };
@@ -167,36 +218,46 @@ class ProductStore {
 
     async unfollowProduct(id) {
         try {
-            const response = await api.delete(`/products/${id}/unfollow`);
+            const response = await productAPI.unfollowProduct(id);
             if (response.success) {
-                this.successMessage = 'Product unfollowed successfully';
-                // Update current product if it's loaded
-                if (this.currentProduct && this.currentProduct.id === id) {
-                    this.currentProduct.isFollowed = false;
-                    this.currentProduct.followersCount -= 1;
-                }
-                // Remove from followed products
-                this.followedProducts = this.followedProducts.filter(p => p.id !== id);
+                runInAction(() => {
+                    this.successMessage = 'Product unfollowed successfully';
+                    // Update current product if it's loaded
+                    if (this.currentProduct && this.currentProduct.id === id) {
+                        this.currentProduct.isFollowed = false;
+                        this.currentProduct.followersCount -= 1;
+                    }
+                    // Remove from followed products
+                    this.followedProducts = this.followedProducts.filter(p => p.id !== id);
+                });
                 return { success: true };
             }
         } catch (error) {
-            this.handleError(error);
+            runInAction(() => {
+                this.handleError(error);
+            });
         }
 
         return { success: false };
     }
 
     async loadFollowedProducts() {
-        this.isLoading = true;
-        this.error = null;
+        runInAction(() => {
+            this.isLoading = true;
+            this.error = null;
+        });
 
         try {
-            const response = await api.get('/products/followed');
-            this.followedProducts = response.products;
-            this.isLoading = false;
+            const response = await productAPI.getFollowedProducts();
+            runInAction(() => {
+                this.followedProducts = response.products;
+                this.isLoading = false;
+            });
         } catch (error) {
-            this.handleError(error);
-            this.isLoading = false;
+            runInAction(() => {
+                this.handleError(error);
+                this.isLoading = false;
+            });
         }
     }
 
@@ -221,13 +282,17 @@ class ProductStore {
     }
 
     clearMessages() {
-        this.error = null;
-        this.successMessage = null;
-        this.validationErrors = {};
+        runInAction(() => {
+            this.error = null;
+            this.successMessage = null;
+            this.validationErrors = {};
+        });
     }
 
     clearCurrentProduct() {
-        this.currentProduct = null;
+        runInAction(() => {
+            this.currentProduct = null;
+        });
     }
 
     // Getters
