@@ -23,27 +23,48 @@ class RegistrationController extends AbstractController
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
 
-        if (!$data) {
+        if (!\is_array($data)) {
             return $this->json(['error' => 'Invalid JSON'], 400);
         }
 
         $user = new User();
-        $user->setEmail($data['email'] ?? '');
-        $user->setFullName($data['fullName'] ?? '');
+
+        // Validate and set email
+        $email = $data['email'] ?? '';
+        if (!\is_string($email)) {
+            return $this->json(['error' => 'Email must be a string'], 400);
+        }
+        $user->setEmail($email);
+
+        // Validate and set full name
+        $fullName = $data['fullName'] ?? '';
+        if (!\is_string($fullName)) {
+            return $this->json(['error' => 'Full name must be a string'], 400);
+        }
+        $user->setFullName($fullName);
 
         // Set roles
         if (isset($data['roles']) && \is_array($data['roles'])) {
-            $user->setRoles($data['roles']);
+            // Validate that all roles are strings
+            $roles = [];
+            foreach ($data['roles'] as $role) {
+                if (!\is_string($role)) {
+                    return $this->json(['error' => 'All roles must be strings'], 400);
+                }
+                $roles[] = $role;
+            }
+            $user->setRoles($roles);
         } else {
             $user->setRoles([User::ROLE_BUYER]); // Default role
         }
 
         // Hash password
         if (isset($data['password'])) {
-            $hashedPassword = $passwordHasher->hashPassword(
-                $user,
-                $data['password']
-            );
+            $password = $data['password'];
+            if (!\is_string($password)) {
+                return $this->json(['error' => 'Password must be a string'], 400);
+            }
+            $hashedPassword = $passwordHasher->hashPassword($user, $password);
             $user->setPassword($hashedPassword);
         }
 

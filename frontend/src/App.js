@@ -4,6 +4,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import Navigation from './components/layout/Navigation';
 import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
+import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
+import ResetPasswordForm from './components/auth/ResetPasswordForm';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ProfilePage from './components/profile/ProfilePage';
 import './App.css';
@@ -42,6 +44,8 @@ function App() {
                             <Route path="/" element={<Home />} />
                             <Route path="/login" element={<LoginForm />} />
                             <Route path="/register" element={<RegisterForm />} />
+                            <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+                            <Route path="/reset-password" element={<ResetPasswordForm />} />
                             <Route path="/unauthorized" element={<Unauthorized />} />
 
                             {/* Protected routes */}

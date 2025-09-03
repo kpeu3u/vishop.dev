@@ -63,6 +63,59 @@ export const authAPI = {
         const response = await api.post('/api/auth/refresh');
         return response.data;
     },
+
+    // Password reset methods
+    forgotPassword: async (email) => {
+        try {
+            const response = await api.post('/api/auth/forgot-password', { email });
+            return response.data;
+        } catch (error) {
+            throw {
+                response: {
+                    data: {
+                        success: false,
+                        error: error.response?.data?.error || 'Network error occurred'
+                    }
+                }
+            };
+        }
+    },
+
+    validateResetToken: async (token) => {
+        try {
+            const response = await api.post('/api/auth/validate-reset-token', { token });
+            return response.data;
+        } catch (error) {
+            throw {
+                response: {
+                    data: {
+                        success: false,
+                        error: error.response?.data?.error || 'Network error occurred'
+                    }
+                }
+            };
+        }
+    },
+
+    resetPassword: async (token, password, confirmPassword) => {
+        try {
+            const response = await api.post('/api/auth/reset-password', {
+                token,
+                password,
+                confirmPassword,
+            });
+            return response.data;
+        } catch (error) {
+            throw {
+                response: {
+                    data: {
+                        success: false,
+                        error: error.response?.data?.error || 'Network error occurred'
+                    }
+                }
+            };
+        }
+    },
 };
 
 // Profile API methods with proper error handling

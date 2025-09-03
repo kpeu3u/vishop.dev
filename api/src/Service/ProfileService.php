@@ -18,6 +18,9 @@ readonly class ProfileService
     ) {
     }
 
+    /**
+     * @return array{success: bool, error?: string, message?: string}
+     */
     public function changePassword(User $user, string $currentPassword, string $newPassword, string $confirmPassword): array
     {
         // Validate current password
@@ -50,6 +53,11 @@ readonly class ProfileService
         }
     }
 
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array{success: bool, error?: string, message?: string, user?: array<string, mixed>}
+     */
     public function updateProfile(User $user, array $data): array
     {
         $originalEmail = $user->getEmail();
@@ -58,13 +66,21 @@ readonly class ProfileService
         try {
             // Update full name if provided
             if (!empty($data['fullName'])) {
-                $validatedFullName = $this->customValidator->validateFullName($data['fullName']);
+                $fullName = $data['fullName'];
+                if (!\is_string($fullName)) {
+                    return ['success' => false, 'error' => 'Full name must be a string'];
+                }
+                $validatedFullName = $this->customValidator->validateFullName($fullName);
                 $user->setFullName($validatedFullName);
             }
 
             // Update email if provided
             if (!empty($data['email'])) {
-                $validatedEmail = $this->customValidator->validateEmail($data['email']);
+                $email = $data['email'];
+                if (!\is_string($email)) {
+                    return ['success' => false, 'error' => 'Email must be a string'];
+                }
+                $validatedEmail = $this->customValidator->validateEmail($email);
 
                 // Check if email is already taken by another user
                 $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $validatedEmail]);

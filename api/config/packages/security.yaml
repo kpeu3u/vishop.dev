@@ -13,6 +13,12 @@ security:
 
     # https://symfony.com/doc/current/security.html#a-authentication-firewalls
     firewalls:
+        # Handle OPTIONS requests for all API endpoints
+        api_cors:
+            pattern: ^/api
+            methods: [OPTIONS]
+            security: false
+
         login:
             pattern: ^/api/auth/login
             stateless: true
@@ -22,61 +28,18 @@ security:
                 password_path: password
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
+
         api:
             pattern: ^/api
             stateless: true
             jwt: ~
-            form_login:
-                login_path: app_login
-                check_path: app_login
-                enable_csrf: true
-            logout:
-                path: app_logout
-                # where to redirect after logout
-                # target: app_any_route
             entry_point: 'jwt'
+
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-#        main:
-#            lazy: true
-#            provider: database_users
-#            user_checker: App\Security\UserChecker
-#
-#            # activate different ways to authenticate
-#            # https://symfony.com/doc/current/security.html#the-firewall
-#
-#            # https://symfony.com/doc/current/security/impersonating_user.html
-#            # switch_user: true
-#
-#            # This option allows users to choose to stay logged in for longer than
-#            # the session lasts using a cookie. Reference: https://symfony.com/doc/current/security/remember_me.html
-#            remember_me:
-#                secret: '%kernel.secret%' # required
-#                lifetime: 604800 # 1 week in seconds
-#            logout:
-#                # The name of the route to redirect to after logging out
-#                target: homepage
-#                # Secure the logout against CSRF
-#                enable_csrf: true
-#
-#            # needed because in tests we redefine the 'main' firewall to use
-#            # HTTP Basic instead of the login form, so this firewall has
-#            # multiple authenticators
-#            # See https://symfony.com/doc/current/security/experimental_authenticators.html#configuring-the-authentication-entry-point
-#            entry_point: 'jwt'
-#
-#            # by default, the feature allows 5 login attempts per minute
-#            # configure the maximum login attempts
-#            login_throttling:
-#                max_attempts: 3          # per minute ...
-#                interval: '15 minutes' # ... or in a custom period
-#
-    # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
+
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
         - { path: ^/api/products, roles: PUBLIC_ACCESS, methods: [ GET ] }
         - { path: ^/api/products, roles: 'ROLE_MERCHANT', methods: [ POST,PUT,PATCH,DELETE ] }
         - { path: ^/api/follows, roles: 'ROLE_BUYER' }
@@ -84,12 +47,8 @@ security:
 when@test:
     security:
         password_hashers:
-            # By default, password hashers are resource intensive and take time. This is
-            # important to generate secure password hashes. In tests however, secure hashes
-            # are not important, waste resources and increase test times. The following
-            # reduces the work factor to the lowest possible values.
             Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
                 algorithm: auto
-                cost: 4 # Lowest possible value for bcrypt
-                time_cost: 3 # Lowest possible value for argon
-                memory_cost: 10 # Lowest possible value for argon
+                cost: 4
+                time_cost: 3
+                memory_cost: 10

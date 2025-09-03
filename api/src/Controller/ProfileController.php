@@ -44,7 +44,7 @@ class ProfileController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
 
-        if (!$data) {
+        if (!\is_array($data)) {
             return $this->json([
                 'success' => false,
                 'error' => 'Invalid JSON data provided',
@@ -54,8 +54,7 @@ class ProfileController extends AbstractController
         // Validate required fields
         $requiredFields = ['currentPassword', 'newPassword', 'confirmPassword'];
         foreach ($requiredFields as $field) {
-
-            if (!isset($data[$field]) || !is_string($data[$field]) || empty(trim($data[$field]))) {
+            if (!isset($data[$field]) || !\is_string($data[$field]) || empty(trim($data[$field]))) {
                 return $this->json([
                     'success' => false,
                     'error' => ucfirst($field) . ' is required',
@@ -63,11 +62,21 @@ class ProfileController extends AbstractController
             }
         }
 
+        // Extract validated string values
+        $currentPassword = $data['currentPassword'];
+        $newPassword = $data['newPassword'];
+        $confirmPassword = $data['confirmPassword'];
+
+        // PHPStan now knows these are strings due to the validation above
+        \assert(\is_string($currentPassword));
+        \assert(\is_string($newPassword));
+        \assert(\is_string($confirmPassword));
+
         $result = $this->profileService->changePassword(
             $user,
-            $data['currentPassword'],
-            $data['newPassword'],
-            $data['confirmPassword']
+            $currentPassword,
+            $newPassword,
+            $confirmPassword
         );
 
         $statusCode = $result['success'] ? 200 : 400;
@@ -83,13 +92,14 @@ class ProfileController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
 
-        if (!$data) {
+        if (!\is_array($data)) {
             return $this->json([
                 'success' => false,
                 'error' => 'Invalid JSON data provided',
             ], 400);
         }
 
+        /** @var array<string, mixed> $data */
         $result = $this->profileService->updateProfile($user, $data);
 
         $statusCode = $result['success'] ? 200 : 400;
