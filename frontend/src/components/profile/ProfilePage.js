@@ -1,85 +1,53 @@
 import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
+import { Container, Row, Col, Nav, Tab } from 'react-bootstrap';
 import { useAuth } from '../../contexts/AuthContext';
 import ChangePasswordForm from './ChangePasswordForm';
 import EditProfileForm from './EditProfileForm';
-import './ProfilePage.css';
 
 const ProfilePage = observer(() => {
     const authStore = useAuth();
-    const [activeTab, setActiveTab] = useState('profile');
-
-    if (!authStore.user) {
-        return <div className="loading">Loading...</div>;
-    }
 
     return (
-        <div className="profile-page">
-            <div className="container">
-                <div className="row">
-                    <div className="col-md-10 offset-md-1">
-                        <h1 className="page-title">My Profile</h1>
-
-                        <div className="profile-tabs">
-                            <button
-                                className={`tab-button ${activeTab === 'profile' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('profile')}
-                            >
-                                Profile Information
-                            </button>
-                            <button
-                                className={`tab-button ${activeTab === 'password' ? 'active' : ''}`}
-                                onClick={() => setActiveTab('password')}
-                            >
-                                Change Password
-                            </button>
-                        </div>
-
-                        <div className="tab-content">
-                            {activeTab === 'profile' && (
-                                <div className="profile-info-section">
-                                    <div className="user-info-card">
-                                        <h3>Current Information</h3>
-                                        <div className="user-info">
-                                            <div className="info-item">
-                                                <label>Full Name:</label>
-                                                <span>{authStore.user.fullName}</span>
-                                            </div>
-                                            <div className="info-item">
-                                                <label>Email:</label>
-                                                <span>{authStore.user.email}</span>
-                                            </div>
-                                            <div className="info-item">
-                                                <label>Roles:</label>
-                                                <span>{authStore.user.roles?.join(', ')}</span>
-                                            </div>
-                                            <div className="info-item">
-                                                <label>Status:</label>
-                                                <div className="status-badges">
-                                                    <span className={`badge ${authStore.user.isVerified ? 'verified' : 'unverified'}`}>
-                                                        {authStore.user.isVerified ? 'Verified' : 'Unverified'}
-                                                    </span>
-                                                    <span className={`badge ${authStore.user.isActive ? 'active' : 'inactive'}`}>
-                                                        {authStore.user.isActive ? 'Active' : 'Inactive'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <EditProfileForm />
-                                </div>
-                            )}
-
-                            {activeTab === 'password' && (
-                                <div className="password-section">
-                                    <ChangePasswordForm />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <Container className="my-4">
+            <Row>
+                <Col>
+                    <h1 className="display-5 mb-4">Profile Settings</h1>
+                </Col>
+            </Row>
+            
+            <Tab.Container defaultActiveKey="profile">
+                <Row>
+                    <Col lg={3} className="mb-4">
+                        <Nav variant="pills" className="flex-column">
+                            <Nav.Item>
+                                <Nav.Link eventKey="profile" className="text-start">
+                                    <i className="bi bi-person me-2"></i>
+                                    Profile Information
+                                </Nav.Link>
+                            </Nav.Item>
+                            <Nav.Item>
+                                <Nav.Link eventKey="password" className="text-start">
+                                    <i className="bi bi-lock me-2"></i>
+                                    Change Password
+                                </Nav.Link>
+                            </Nav.Item>
+                        </Nav>
+                    </Col>
+                    
+                    <Col lg={9}>
+                        <Tab.Content>
+                            <Tab.Pane eventKey="profile">
+                                <EditProfileForm />
+                            </Tab.Pane>
+                            <Tab.Pane eventKey="password">
+                                <ChangePasswordForm />
+                            </Tab.Pane>
+                        </Tab.Content>
+                    </Col>
+                </Row>
+            </Tab.Container>
+        </Container>
     );
 });
 

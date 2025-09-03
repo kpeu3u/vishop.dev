@@ -48,9 +48,33 @@ class AuthStore {
                 throw new Error('No token received');
             }
         } catch (error) {
-            this.error = error.response?.data?.message || error.message || 'Login failed';
+            console.error('Login error:', error); // Debug logging
+            
+            // Handle different types of errors
+            let errorMessage;
+            
+            if (error.response) {
+                // Server responded with error status
+                if (error.response.status === 401) {
+                    errorMessage = 'Invalid email or password';
+                } else if (error.response.status === 400) {
+                    errorMessage = error.response.data?.message || 'Invalid request';
+                } else if (error.response.status >= 500) {
+                    errorMessage = 'Server error. Please try again later.';
+                } else {
+                    errorMessage = error.response.data?.message || 'Login failed';
+                }
+            } else if (error.request) {
+                // Network error
+                errorMessage = 'Unable to connect to server. Please check your connection.';
+            } else {
+                // Other error
+                errorMessage = error.message || 'Login failed';
+            }
+            
+            this.error = errorMessage;
             this.isLoading = false;
-            return { success: false, error: this.error };
+            return { success: false, error: errorMessage };
         }
     }
 
@@ -63,9 +87,20 @@ class AuthStore {
             this.isLoading = false;
             return { success: true, data: response };
         } catch (error) {
-            this.error = error.response?.data?.message || error.message || 'Registration failed';
+            console.error('Registration error:', error); // Debug logging
+            
+            let errorMessage;
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.response?.status === 400) {
+                errorMessage = 'Invalid registration data';
+            } else {
+                errorMessage = 'Registration failed. Please try again.';
+            }
+            
+            this.error = errorMessage;
             this.isLoading = false;
-            return { success: false, error: this.error };
+            return { success: false, error: errorMessage };
         }
     }
 

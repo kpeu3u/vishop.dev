@@ -23,11 +23,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        // Only redirect on 401 if the request is NOT a login attempt
+        if (error.response?.status === 401 && !error.config?.url?.includes('/api/auth/login')) {
             localStorage.removeItem('jwt_token');
             localStorage.removeItem('user_data');
-            // Redirect to login page
-            window.location.href = '/login';
+            // Only redirect to login if we're not already on the login page
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }

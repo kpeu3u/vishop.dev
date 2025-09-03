@@ -11,3 +11,52 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.min-vh-100 {
+    min-height: 100vh;
+}
+
+.auth-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.auth-card {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.main-content {
+    flex: 1;
+}
+
+.footer {
+    background-color: #f8f9fa;
+    padding: 2rem 0;
+    margin-top: auto;
+}
+
+.form-floating > label {
+    color: #6c757d;
+}
+
+.btn-custom {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    font-weight: 500;
+}
+
+.btn-custom:hover {
+    background: linear-gradient(45deg, #5a6fd8, #6a4190);
+    color: white;
+}
+
+.alert-custom {
+    border: none;
+    border-radius: 12px;
+}
