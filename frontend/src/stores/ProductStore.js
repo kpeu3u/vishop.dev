@@ -202,7 +202,7 @@ class ProductStore {
                     // Update current product if it's loaded
                     if (this.currentProduct && this.currentProduct.id === id) {
                         this.currentProduct.isFollowed = true;
-                        this.currentProduct.followersCount += 1;
+                        this.currentProduct.followersCount = (this.currentProduct.followersCount || 0) + 1;
                     }
                 });
                 return { success: true };
@@ -225,8 +225,9 @@ class ProductStore {
                     // Update current product if it's loaded
                     if (this.currentProduct && this.currentProduct.id === id) {
                         this.currentProduct.isFollowed = false;
-                        this.currentProduct.followersCount -= 1;
+                        this.currentProduct.followersCount = Math.max((this.currentProduct.followersCount || 1) - 1, 0);
                     }
+                    
                     // Remove from followed products
                     this.followedProducts = this.followedProducts.filter(p => p.id !== id);
                 });

@@ -32,11 +32,6 @@ readonly class ProductService
      */
     public function createProduct(array $productData, User $merchant): array
     {
-        error_log('=== ProductService::createProduct called ===');
-        error_log('Merchant ID: ' . $merchant->getId());
-        error_log('Merchant Email: ' . $merchant->getEmail());
-        error_log('Is merchant managed by EntityManager: ' . ($this->entityManager->contains($merchant) ? 'YES' : 'NO'));
-
         if (!$merchant->isMerchant()) {
             return [
                 'success' => false,
@@ -55,7 +50,6 @@ readonly class ProductService
         try {
             // Ensure the merchant is properly managed by the EntityManager
             if (!$this->entityManager->contains($merchant)) {
-                error_log('Merchant not managed by EntityManager, refreshing...');
                 $merchant = $this->entityManager->find(User::class, $merchant->getId());
                 if (!$merchant) {
                     throw new \Exception('Merchant user not found in database');
@@ -81,16 +75,11 @@ readonly class ProductService
             $this->entityManager->persist($product);
             $this->entityManager->flush();
 
-            error_log('Product created successfully with ID: ' . $product->getId());
-
             return [
                 'success' => true,
                 'product' => $this->formatProduct($product),
             ];
         } catch (\Exception $e) {
-            error_log('Product creation failed: ' . $e->getMessage());
-            error_log('Stack trace: ' . $e->getTraceAsString());
-
             return [
                 'success' => false,
                 'error' => 'Failed to create product: ' . $e->getMessage(),

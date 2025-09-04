@@ -16,9 +16,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    // We can use constants for roles to find usages all over the application rather
-    // than doing a full-text search on the "ROLE_" string.
-    // It also prevents from making typo errors.
     final public const ROLE_MERCHANT = 'ROLE_MERCHANT';
     final public const ROLE_BUYER = 'ROLE_BUYER';
 

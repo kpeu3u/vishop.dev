@@ -42,15 +42,24 @@ security:
             security: false
 
     access_control:
-        # General product endpoints (less specific patterns)
-        - { path: ^/api/auth$, roles: PUBLIC_ACCESS }
-        - { path: ^/api/products, roles: PUBLIC_ACCESS, methods: [ GET ] }
-        - { path: ^/api/products, roles: 'ROLE_MERCHANT', methods: [ POST,PUT,PATCH,DELETE ] }
-        # Merchant-specific endpoints first (more specific patterns)
-        - { path: ^/api/products/my-products, roles: 'ROLE_MERCHANT' }
-        - { path: ^/api/products/\d+/follow, roles: 'ROLE_BUYER' }
-        - { path: ^/api/products/\d+/unfollow, roles: 'ROLE_BUYER' }
+        # Auth endpoints (public access)
+        - { path: ^/api/auth, roles: PUBLIC_ACCESS }
+
+        # Buyer-specific endpoints (most specific patterns first)
+        - { path: ^/api/products/\d+/follow, roles: 'ROLE_BUYER', methods: [POST] }
+        - { path: ^/api/products/\d+/unfollow, roles: 'ROLE_BUYER', methods: [DELETE] }
         - { path: ^/api/products/followed, roles: 'ROLE_BUYER' }
+
+        # Merchant-specific endpoints
+        - { path: ^/api/products/my-products, roles: 'ROLE_MERCHANT' }
+        - { path: ^/api/products/\d+$, roles: 'ROLE_MERCHANT', methods: [PUT, PATCH, DELETE] }
+        - { path: ^/api/products$, roles: 'ROLE_MERCHANT', methods: [POST] }
+
+        # General product endpoints (less specific patterns last)
+        - { path: ^/api/products, roles: PUBLIC_ACCESS, methods: [GET] }
+
+        # All other API endpoints require authentication
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 
 
