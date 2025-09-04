@@ -21,7 +21,7 @@ class Car extends Product
     #[Assert\Choice(choices: [3, 4, 5], message: 'Number of doors must be 3, 4, or 5')]
     private int $numberOfDoors;
 
-    #[ORM\Column(type: Types::STRING, enumType: CarCategory::class, nullable: false)]
+    #[ORM\Column(type: Types::STRING, nullable: false, enumType: CarCategory::class)]
     #[Assert\NotBlank(message: 'Car category is required')]
     private CarCategory $category;
 
