@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -13,16 +12,11 @@ const api = axios.create({
 // Add JWT token to requests if available
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('jwt_token');
-    console.log('Token from localStorage:', token ? token.substring(0, 20) + '...' : 'null'); // Debug log
-    
     if (token) {
-        console.log('Adding token to request:', token.substring(0, 20) + '...'); // Debug log
         config.headers.Authorization = `Bearer ${token}`;
     } else {
         console.log('No token found in localStorage'); // Debug log
     }
-    
-    console.log('Request headers:', config.headers); // Debug log
     return config;
 });
 
@@ -30,22 +24,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        console.log('API Error:', error.response?.status, error.response?.data); // Debug log
-        
-        // Only auto-logout and redirect on 401 for specific conditions:
-        // 1. Not a login attempt
-        // 2. Not a profile/user verification request (which happens on page refresh)
-        // 3. Not already on login page
-        const isLoginRequest = error.config?.url?.includes('/api/auth/login');
-        const isProfileRequest = error.config?.url?.includes('/api/user/profile');
-        const isOnLoginPage = window.location.pathname === '/login';
-        
-        if (error.response?.status === 401 && !isLoginRequest && !isProfileRequest && !isOnLoginPage) {
+        if (error.response?.status === 401) {
             localStorage.removeItem('jwt_token');
             localStorage.removeItem('user_data');
             window.location.href = '/login';
         }
-        
+
         return Promise.reject(error);
     }
 );
@@ -134,7 +118,7 @@ export const authAPI = {
 export const profileAPI = {
     changePassword: async (currentPassword, newPassword, confirmPassword) => {
         try {
-            const response = await api.post('/api/user/profile/change-password', {
+            const response = await api.post('/api/user/change-password', {
                 currentPassword,
                 newPassword,
                 confirmPassword,
@@ -155,7 +139,7 @@ export const profileAPI = {
 
     updateProfile: async (profileData) => {
         try {
-            const response = await api.put('/api/user/profile/update', profileData);
+            const response = await api.put('/api/user/update', profileData);
             return response.data;
         } catch (error) {
             // Re-throw with standardized format

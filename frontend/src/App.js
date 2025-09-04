@@ -4,7 +4,7 @@ import { Container, Row, Col } from 'react-bootstrap';
 import { AuthProvider } from './contexts/AuthContext';
 import Navigation from './components/layout/Navigation';
 import LoginForm from './components/auth/LoginForm';
-import RegisterForm from './components/auth/RegisterForm';
+import RegistrationForm from "./components/auth/RegistrationForm";
 import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
 import ResetPasswordForm from './components/auth/ResetPasswordForm';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -115,7 +115,7 @@ function App() {
                         <Routes>
                             <Route path="/" element={<Home />} />
                             <Route path="/login" element={<LoginForm />} />
-                            <Route path="/register" element={<RegisterForm />} />
+                            <Route path="/register" element={<RegistrationForm />} />
                             <Route path="/forgot-password" element={<ForgotPasswordForm />} />
                             <Route path="/reset-password" element={<ResetPasswordForm />} />
                             <Route path="/unauthorized" element={<Unauthorized />} />

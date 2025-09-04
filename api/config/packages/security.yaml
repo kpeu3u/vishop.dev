@@ -45,7 +45,6 @@ security:
         # General product endpoints (less specific patterns)
         - { path: ^/api/auth$, roles: PUBLIC_ACCESS }
         - { path: ^/api/products, roles: PUBLIC_ACCESS, methods: [ GET ] }
-        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api/products, roles: 'ROLE_MERCHANT', methods: [ POST,PUT,PATCH,DELETE ] }
         # Merchant-specific endpoints first (more specific patterns)
         - { path: ^/api/products/my-products, roles: 'ROLE_MERCHANT' }

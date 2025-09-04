@@ -8,6 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/api/products', name: 'api_product_')]
@@ -67,7 +68,7 @@ class ProductController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'show', methods: ['GET'])]
+    #[Route('/{id}', name: 'show', requirements: ['id' => Requirement::POSITIVE_INT], methods: ['GET'])]
     public function show(int $id): JsonResponse
     {
         $product = $this->productService->getProductById($id);
@@ -97,24 +98,13 @@ class ProductController extends AbstractController
     #[IsGranted('ROLE_MERCHANT')] // Re-enable this
     public function create(Request $request): JsonResponse
     {
-        // Add debugging at the very start
-        error_log('=== CREATE METHOD ACCESSED ===');
-        error_log('Request method: ' . $request->getMethod());
-        error_log('Request URI: ' . $request->getRequestUri());
-        error_log('Request content: ' . $request->getContent());
-
         $user = $this->getUser();
         if (!$user instanceof User) {
-            error_log('User authentication failed - user is not instance of User class');
-
             return $this->json([
                 'success' => false,
                 'error' => 'Invalid user - not authenticated properly',
             ], 401);
         }
-
-        error_log('Authenticated user: ' . $user->getEmail() . ' (ID: ' . $user->getId() . ')');
-        error_log('User roles: ' . implode(', ', $user->getRoles()));
 
         $data = json_decode($request->getContent(), true);
 
@@ -131,7 +121,7 @@ class ProductController extends AbstractController
         return $this->json($result, $result['success'] ? 201 : 400);
     }
 
-    #[Route('/{id}', name: 'update', methods: ['PUT', 'PATCH'])]
+    #[Route('/{id}', name: 'update', requirements: ['id' => Requirement::POSITIVE_INT], methods: ['PUT', 'PATCH'])]
     #[IsGranted('ROLE_MERCHANT')]
     public function update(int $id, Request $request): JsonResponse
     {
@@ -167,7 +157,7 @@ class ProductController extends AbstractController
         return $this->json($result, $result['success'] ? 200 : 400);
     }
 
-    #[Route('/{id}', name: 'delete', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'delete', requirements: ['id' => Requirement::POSITIVE_INT], methods: ['DELETE'])]
     #[IsGranted('ROLE_MERCHANT')]
     public function delete(int $id): JsonResponse
     {
@@ -213,7 +203,7 @@ class ProductController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/follow', name: 'follow', methods: ['POST'])]
+    #[Route('/{id}/follow', name: 'follow', requirements: ['id' => Requirement::POSITIVE_INT], methods: ['POST'])]
     #[IsGranted('ROLE_BUYER')]
     public function follow(int $id): JsonResponse
     {
@@ -239,7 +229,7 @@ class ProductController extends AbstractController
         return $this->json($result, $result['success'] ? 200 : 400);
     }
 
-    #[Route('/{id}/unfollow', name: 'unfollow', methods: ['DELETE'])]
+    #[Route('/{id}/unfollow', name: 'unfollow', requirements: ['id' => Requirement::POSITIVE_INT], methods: ['DELETE'])]
     #[IsGranted('ROLE_BUYER')]
     public function unfollow(int $id): JsonResponse
     {

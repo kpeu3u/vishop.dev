@@ -6,6 +6,8 @@ class AuthStore {
     isAuthenticated = false;
     isLoading = false;
     error = null;
+    successMessage = null;
+    validationErrors = {};
 
     constructor() {
         makeAutoObservable(this);
@@ -16,8 +18,7 @@ class AuthStore {
     decodeJWT(token) {
         try {
             const payload = token.split('.')[1];
-            const decoded = JSON.parse(atob(payload));
-            return decoded;
+            return JSON.parse(atob(payload));
         } catch (error) {
             console.error('Error decoding JWT:', error);
             return null;
@@ -27,36 +28,54 @@ class AuthStore {
     initAuth() {
         const token = localStorage.getItem('jwt_token');
         const userData = localStorage.getItem('user_data');
-
-        console.log('InitAuth - Token exists:', !!token); // Debug log
-        console.log('InitAuth - User data exists:', !!userData); // Debug log
-
         if (token && userData) {
             try {
                 const user = JSON.parse(userData);
-                
-                // If user data doesn't have roles, extract them from JWT token
-                if (!user.roles && token) {
-                    const jwtPayload = this.decodeJWT(token);
-                    if (jwtPayload && jwtPayload.roles) {
-                        user.roles = jwtPayload.roles;
-                        // Update localStorage with the enhanced user data
-                        localStorage.setItem('user_data', JSON.stringify(user));
-                    }
+                const jwtPayload = this.decodeJWT(token);
+
+                // Create a complete user object by merging stored data with JWT data
+                const completeUser = {
+                    id: user.id || jwtPayload?.id,
+                    email: user.email || jwtPayload?.email,
+                    fullName: user.fullName || jwtPayload?.fullName || jwtPayload?.username || user.email,
+                    roles: user.roles || jwtPayload?.roles || []
+                };
+
+                // If the stored user data was incomplete, update it
+                if (!user.fullName && jwtPayload?.fullName) {
+                    localStorage.setItem('user_data', JSON.stringify(completeUser));
                 }
 
                 runInAction(() => {
-                    this.user = user;
+                    this.user = completeUser;
                     this.isAuthenticated = true;
                 });
                 
-                console.log('InitAuth - User set:', this.user); // Debug log
-                console.log('InitAuth - User roles:', this.user?.roles); // Debug log
-                console.log('InitAuth - isMerchant():', this.isMerchant()); // Debug log
-                console.log('InitAuth - isBuyer():', this.isBuyer()); // Debug log
-                
             } catch (error) {
-                console.log('InitAuth - Error parsing user data:', error); // Debug log
+                this.logout();
+            }
+        } else if (token && !userData) {
+            // Handle case where we have token but no user data - extract from JWT
+            try {
+                const jwtPayload = this.decodeJWT(token);
+                if (jwtPayload) {
+                    const userFromJWT = {
+                        id: jwtPayload.id,
+                        email: jwtPayload.email || jwtPayload.username,
+                        fullName: jwtPayload.fullName || jwtPayload.username,
+                        roles: jwtPayload.roles || []
+                    };
+
+                    localStorage.setItem('user_data', JSON.stringify(userFromJWT));
+
+                    runInAction(() => {
+                        this.user = userFromJWT;
+                        this.isAuthenticated = true;
+                    });
+                } else {
+                    this.logout();
+                }
+            } catch (error) {
                 this.logout();
             }
         }
@@ -70,18 +89,21 @@ class AuthStore {
 
         try {
             const response = await authAPI.login(email, password);
-
-            console.log('Login response:', response); // Debug log
-
             if (response.token) {
-                let user = response.user || { email };
-                
-                // Extract roles from JWT token if not present in user object
-                if (!user.roles) {
+                let user;
+
+                // Check if response includes user data (from our custom listener)
+                if (response.user) {
+                    user = response.user;
+                } else {
+                    // Fallback: extract user data from JWT token
                     const jwtPayload = this.decodeJWT(response.token);
-                    if (jwtPayload && jwtPayload.roles) {
-                        user.roles = jwtPayload.roles;
-                    }
+                    user = {
+                        id: jwtPayload?.id,
+                        email: email,
+                        roles: jwtPayload?.roles || [],
+                        fullName: jwtPayload?.fullName
+                    };
                 }
 
                 localStorage.setItem('jwt_token', response.token);
@@ -93,17 +115,12 @@ class AuthStore {
                     this.isLoading = false;
                 });
 
-                console.log('Login successful - Token stored:', response.token.substring(0, 20) + '...'); // Debug log
-                console.log('Login successful - User data:', this.user); // Debug log
-                console.log('Login successful - User roles:', this.user?.roles); // Debug log
-
                 return { success: true };
             } else {
-                throw new Error('No token received');
+                throw new Error('No token received from server');
             }
         } catch (error) {
-            console.error('Login error:', error); // Debug logging
-            
+
             // Handle different types of errors
             let errorMessage;
             
@@ -138,36 +155,70 @@ class AuthStore {
         runInAction(() => {
             this.isLoading = true;
             this.error = null;
+            this.successMessage = null;
+            this.validationErrors = {};
         });
 
         try {
             const response = await authAPI.register(userData);
-            runInAction(() => {
-                this.isLoading = false;
-            });
-            return { success: true, data: response };
-        } catch (error) {
-            console.error('Registration error:', error); // Debug logging
             
-            let errorMessage;
-            if (error.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            } else if (error.response?.status === 400) {
-                errorMessage = 'Invalid registration data';
+            // Check if registration was successful based on the backend response structure
+            // Backend returns: { message: "User created successfully", user: {...} }
+            if (response.message && response.user) {
+                runInAction(() => {
+                    this.successMessage = 'Registration successful! Please log in to continue.';
+                    this.isLoading = false;
+                });
+                return { 
+                    success: true, 
+                    message: 'Registration successful! Please log in to continue.',
+                    user: response.user 
+                };
             } else {
-                errorMessage = 'Registration failed. Please try again.';
+                throw new Error('Unexpected response format');
             }
-            
+        } catch (error) {
             runInAction(() => {
-                this.error = errorMessage;
+                this.handleError(error);
                 this.isLoading = false;
             });
-            return { success: false, error: errorMessage };
+            return { success: false };
         }
     }
 
+    handleError(error) {
+        if (error.response?.data?.errors) {
+            // Handle validation errors array from backend
+            if (Array.isArray(error.response.data.errors)) {
+                this.error = error.response.data.errors.join(', ');
+            } else {
+                this.validationErrors = error.response.data.errors;
+                this.error = 'Please fix the validation errors';
+            }
+        } else if (error.response?.data?.error) {
+            this.error = error.response.data.error;
+        } else if (error.response?.status >= 500) {
+            this.error = 'Server error. Please try again later.';
+        } else {
+            this.error = error.message || 'An error occurred during registration';
+        }
+    }
+
+    setSuccessMessage(message) {
+        runInAction(() => {
+            this.successMessage = message;
+        });
+    }
+
+    clearMessages() {
+        runInAction(() => {
+            this.error = null;
+            this.successMessage = null;
+            this.validationErrors = {};
+        });
+    }
+
     async logout() {
-        console.log('Logout called'); // Debug log
         runInAction(() => {
             this.isLoading = true;
         });
@@ -190,25 +241,6 @@ class AuthStore {
         });
     }
 
-    // Verify token method for explicit verification only (when needed)
-    async verifyToken() {
-        try {
-            console.log('Verifying token...'); // Debug log
-            const userData = await authAPI.getCurrentUser();
-            runInAction(() => {
-                this.updateUser(userData);
-            });
-            return { success: true };
-        } catch (error) {
-            console.log('Token verification failed:', error); // Debug log
-            // Only logout if it's an authentication error
-            if (error.response?.status === 401 || error.response?.status === 403) {
-                await this.logout();
-            }
-            return { success: false, error: error.message };
-        }
-    }
-
     updateUser(userData) {
         this.user = userData;
         localStorage.setItem('user_data', JSON.stringify(userData));
@@ -221,20 +253,15 @@ class AuthStore {
     }
 
     hasRole(role) {
-        console.log('hasRole check:', role, 'User roles:', this.user?.roles, 'Result:', this.user?.roles?.includes(role)); // Debug log
         return this.user?.roles?.includes(role) || false;
     }
 
     isMerchant() {
-        const result = this.hasRole('ROLE_MERCHANT');
-        console.log('isMerchant() result:', result); // Debug log
-        return result;
+        return this.hasRole('ROLE_MERCHANT');
     }
 
     isBuyer() {
-        const result = this.hasRole('ROLE_BUYER');
-        console.log('isBuyer() result:', result); // Debug log
-        return result;
+        return this.hasRole('ROLE_BUYER');
     }
 }
 export default new AuthStore();
