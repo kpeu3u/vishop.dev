@@ -53,7 +53,7 @@ vishop.dev/
 #### 1. Clone the Repository
 
 ```bash
-git clone <repository-url> vishop.dev
+git clone https://github.com/kpeu3u/vishop.dev.git vishop.dev
 cd vishop.dev
 ```
 
