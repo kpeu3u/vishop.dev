@@ -77,7 +77,7 @@ const LoginForm = observer(() => {
                             <Card.Body className="p-4">
                                 <div className="text-center mb-4">
                                     <h2 className="fw-bold text-primary">Welcome Back</h2>
-                                    <p className="text-muted">Sign in to your VShop account</p>
+                                    <p className="text-muted">Sign in to your ViShop account</p>
                                 </div>
 
                                 {successMessage && (

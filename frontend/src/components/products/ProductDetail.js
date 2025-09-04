@@ -233,7 +233,7 @@ const ProductDetail = observer(() => {
                             <h5>Seller Information</h5>
                             <p className="mb-0">
                                 <i className="bi bi-person me-2"></i>
-                                <strong>{product.merchant?.name || 'Merchant'}</strong>
+                                <strong>{product.merchant?.fullName || 'Merchant'}</strong>
                             </p>
                         </Card.Body>
                     </Card>

@@ -33,9 +33,17 @@ final class AuthControllerTest extends WebTestCase
         );
 
         // Only check the message if we got JSON response from our controller
-        if (str_contains($contentType, 'application/json')) {
-            $responseData = json_decode($response->getContent(), true);
-            $this->assertSame('Login endpoint - should not reach here', $responseData['message']);
+        if ($contentType !== null && str_contains($contentType, 'application/json')) {
+            if ($response->getContent()){
+                $responseData = json_decode($response->getContent(), true);
+                if (!\is_array($responseData)) {
+                    $this->fail('Response content is not valid JSON');
+                }
+                $message =  $responseData['message'] ?? '';
+                $this->assertSame('Login endpoint - should not reach here', $message);
+            } else {
+                $this->fail('Response content is empty');
+            }
         }
     }
 
@@ -65,6 +73,11 @@ final class AuthControllerTest extends WebTestCase
         $entityManager->persist($user);
         $entityManager->flush();
 
+        $credentials = json_encode([
+            'email' => 'test@example.com',
+            'password' => 'password123',
+        ]);
+
         // Test JWT authentication flow
         $client->request(
             'POST',
@@ -72,10 +85,7 @@ final class AuthControllerTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode([
-                'email' => 'test@example.com',
-                'password' => 'password123',
-            ])
+            $credentials ?: null
         );
 
         // The response should either be successful JWT token or handled by JWT authenticator
@@ -93,17 +103,18 @@ final class AuthControllerTest extends WebTestCase
     public function testLoginWithInvalidCredentialsReturnsUnauthorized(): void
     {
         $client = self::createClient();
-
+        $credentials = json_encode([
+            'email' => 'nonexistent@example.com',
+            'password' => 'wrongpassword',
+        ]);
         $client->request(
             'POST',
             '/api/auth/login',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode([
-                'email' => 'nonexistent@example.com',
-                'password' => 'wrongpassword',
-            ])
+            $credentials ?: null
+
         );
 
         // Should return 401 Unauthorized for invalid credentials
@@ -117,7 +128,7 @@ final class AuthControllerTest extends WebTestCase
     public function testLoginWithMissingCredentialsReturnsBadRequest(): void
     {
         $client = self::createClient();
-
+        $credentials = json_encode(['password' => 'password123']);
         // Test with missing email
         $client->request(
             'POST',
@@ -125,7 +136,7 @@ final class AuthControllerTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode(['password' => 'password123'])
+            $credentials ?: null
         );
 
         $this->assertContains($client->getResponse()->getStatusCode(), [
@@ -133,6 +144,7 @@ final class AuthControllerTest extends WebTestCase
             Response::HTTP_UNAUTHORIZED,
         ]);
 
+        $credentials = json_encode(['email' => 'test@example.com']);
         // Test with missing password
         $client->request(
             'POST',
@@ -140,7 +152,7 @@ final class AuthControllerTest extends WebTestCase
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode(['email' => 'test@example.com'])
+            $credentials ?: null
         );
 
         $this->assertContains($client->getResponse()->getStatusCode(), [

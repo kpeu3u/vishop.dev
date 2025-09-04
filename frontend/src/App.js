@@ -37,7 +37,7 @@ const Home = () => (
             <Row className="text-center">
                 <Col>
                     <h1 className="display-3 fw-bold text-primary mb-4">
-                        Welcome to VShop
+                        Welcome to ViShop
                     </h1>
                     <p className="lead fs-4 text-muted mb-4">
                         Your premier vehicle shopping destination
@@ -192,7 +192,7 @@ function App() {
                             <Row>
                                 <Col className="text-center">
                                     <p className="text-muted mb-0">
-                                        © 2025 VShop. All rights reserved.
+                                        © 2025 ViShop. All rights reserved.
                                     </p>
                                 </Col>
                             </Row>

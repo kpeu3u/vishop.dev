@@ -1,4 +1,4 @@
-# VShop - Vehicle Shopping Platform
+# ViShop - Vehicle Shopping Platform
 
 A full-stack vehicle shopping platform built with React frontend and Symfony backend API.
 

@@ -78,7 +78,7 @@ const RegistrationForm = observer(() => {
                             <Card.Body className="p-4">
                                 <div className="text-center mb-4">
                                     <h2 className="fw-bold text-primary">Create Account</h2>
-                                    <p className="text-muted">Join VShop and start shopping</p>
+                                    <p className="text-muted">Join ViShop and start shopping</p>
                                 </div>
 
                                 {/* Success Message */}

@@ -23,7 +23,7 @@ const Navigation = observer(() => {
             <Container>
                 <Navbar.Brand>
                     <Link to="/" className="navbar-brand text-decoration-none text-white">
-                        VShop
+                        ViShop
                     </Link>
                 </Navbar.Brand>
 

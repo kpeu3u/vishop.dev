@@ -101,7 +101,7 @@ const ProductCard = observer(({ product }) => {
                     <div className="d-flex justify-content-between align-items-center mb-2">
                         <small className="text-muted">
                             <i className="bi bi-person me-1"></i>
-                            {product.merchant?.name || 'Merchant'}
+                            {product.merchant?.fullName || 'Merchant'}
                         </small>
                         {product.followersCount !== undefined && (
                             <small className="text-muted">
@@ -121,32 +121,6 @@ const ProductCard = observer(({ product }) => {
                             <i className="bi bi-eye me-1"></i>
                             View Details
                         </Button>
-
-                        {authStore.isAuthenticated && authStore.isBuyer() && (
-                            <>
-                                {product.isFollowed ? (
-                                    <Button
-                                        variant="outline-danger"
-                                        size="sm"
-                                        onClick={handleUnfollow}
-                                        disabled={ProductStore.isLoading}
-                                    >
-                                        <i className="bi bi-heart-fill me-1"></i>
-                                        Unfollow
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        variant="outline-primary"
-                                        size="sm"
-                                        onClick={handleFollow}
-                                        disabled={ProductStore.isLoading}
-                                    >
-                                        <i className="bi bi-heart me-1"></i>
-                                        Follow
-                                    </Button>
-                                )}
-                            </>
-                        )}
                     </ButtonGroup>
                 </div>
             </Card.Body>
