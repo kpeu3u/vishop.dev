@@ -14,7 +14,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class ProductController extends AbstractController
 {
     public function __construct(
-        private ProductService $productService
+        private readonly ProductService $productService,
     ) {
     }
 
@@ -94,16 +94,27 @@ class ProductController extends AbstractController
     }
 
     #[Route('', name: 'create', methods: ['POST'])]
-    #[IsGranted('ROLE_MERCHANT')]
+    #[IsGranted('ROLE_MERCHANT')] // Re-enable this
     public function create(Request $request): JsonResponse
     {
+        // Add debugging at the very start
+        error_log('=== CREATE METHOD ACCESSED ===');
+        error_log('Request method: ' . $request->getMethod());
+        error_log('Request URI: ' . $request->getRequestUri());
+        error_log('Request content: ' . $request->getContent());
+
         $user = $this->getUser();
         if (!$user instanceof User) {
+            error_log('User authentication failed - user is not instance of User class');
+
             return $this->json([
                 'success' => false,
-                'error' => 'Invalid user',
+                'error' => 'Invalid user - not authenticated properly',
             ], 401);
         }
+
+        error_log('Authenticated user: ' . $user->getEmail() . ' (ID: ' . $user->getId() . ')');
+        error_log('User roles: ' . implode(', ', $user->getRoles()));
 
         $data = json_decode($request->getContent(), true);
 
@@ -275,17 +286,17 @@ class ProductController extends AbstractController
     }
 
     /**
-     * Validates that the data is an associative array with string keys
+     * Validates that the data is an associative array with string keys.
      */
     private function isValidProductData(mixed $data): bool
     {
-        if (!is_array($data)) {
+        if (!\is_array($data)) {
             return false;
         }
 
         // Check if all keys are strings (associative array)
         foreach (array_keys($data) as $key) {
-            if (!is_string($key)) {
+            if (!\is_string($key)) {
                 return false;
             }
         }

@@ -68,6 +68,20 @@
             ".php-cs-fixer.dist.php"
         ]
     },
+    "gesdinet/jwt-refresh-token-bundle": {
+        "version": "1.5",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "1.0",
+            "ref": "2390b4ed5c195e0b3f6dea45221f3b7c0af523a0"
+        },
+        "files": [
+            "config/packages/gesdinet_jwt_refresh_token.yaml",
+            "config/routes/gesdinet_jwt_refresh_token.yaml",
+            "src/Entity/RefreshToken.php"
+        ]
+    },
     "lexik/jwt-authentication-bundle": {
         "version": "3.1",
         "recipe": {
@@ -256,19 +270,6 @@
             "config/routes/security.yaml"
         ]
     },
-    "symfony/twig-bundle": {
-        "version": "7.3",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "main",
-            "version": "6.4",
-            "ref": "cab5fd2a13a45c266d45a7d9337e28dee6272877"
-        },
-        "files": [
-            "config/packages/twig.yaml",
-            "templates/base.html.twig"
-        ]
-    },
     "symfony/uid": {
         "version": "7.3",
         "recipe": {
@@ -288,19 +289,6 @@
         },
         "files": [
             "config/packages/validator.yaml"
-        ]
-    },
-    "symfony/web-profiler-bundle": {
-        "version": "7.3",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "main",
-            "version": "7.3",
-            "ref": "a363460c1b0b4a4d0242f2ce1a843ca0f6ac9026"
-        },
-        "files": [
-            "config/packages/web_profiler.yaml",
-            "config/routes/web_profiler.yaml"
         ]
     },
     "symfonycasts/reset-password-bundle": {

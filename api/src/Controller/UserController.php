@@ -3,24 +3,23 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Service\ProfileService;
+use App\Service\UserService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/api/user/profile')]
+#[Route('/api/user')]
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
-class ProfileController extends AbstractController
+class UserController extends AbstractController
 {
     public function __construct(
-        private readonly ProfileService $profileService,
+        private readonly UserService $profileService,
     ) {
     }
 
-    #[Route('/', name: 'user_profile', methods: ['GET'])]
-    #[IsGranted('IS_AUTHENTICATED_FULLY')]
+    #[Route('/profile', name: 'user_profile', methods: ['GET'])]
     public function getUserProfile(): JsonResponse
     {
         /** @var User $user */

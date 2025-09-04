@@ -67,7 +67,7 @@ class ProductRepository extends ServiceEntityRepository
     }
 
     /**
-     * Returns products followed by a specific user
+     * Returns products followed by a specific user.
      *
      * @return Product[]
      */
@@ -86,9 +86,10 @@ class ProductRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find products with filters
+     * Find products with filters.
      *
      * @param array<string, mixed> $filters
+     *
      * @return Product[]
      */
     public function findWithFilters(array $filters): array
@@ -124,23 +125,23 @@ class ProductRepository extends ServiceEntityRepository
     }
 
     /**
-     * Apply filter criteria to query builder
+     * Apply filter criteria to query builder.
      *
      * @param array<string, mixed> $criteria
      */
     private function applyCriteria(QueryBuilder $qb, array $criteria): void
     {
-        if (!empty($criteria['brand']) && is_string($criteria['brand'])) {
+        if (!empty($criteria['brand']) && \is_string($criteria['brand'])) {
             $qb->andWhere('LOWER(p.brand) LIKE LOWER(:brand)')
                 ->setParameter('brand', '%' . $criteria['brand'] . '%');
         }
 
-        if (!empty($criteria['model']) && is_string($criteria['model'])) {
+        if (!empty($criteria['model']) && \is_string($criteria['model'])) {
             $qb->andWhere('LOWER(p.model) LIKE LOWER(:model)')
                 ->setParameter('model', '%' . $criteria['model'] . '%');
         }
 
-        if (!empty($criteria['colour']) && is_string($criteria['colour'])) {
+        if (!empty($criteria['colour']) && \is_string($criteria['colour'])) {
             $qb->andWhere('LOWER(p.colour) LIKE LOWER(:colour)')
                 ->setParameter('colour', '%' . $criteria['colour'] . '%');
         }

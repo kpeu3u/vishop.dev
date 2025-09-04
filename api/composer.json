@@ -32,6 +32,7 @@
         "doctrine/doctrine-bundle": "^2.15",
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.5",
+        "gesdinet/jwt-refresh-token-bundle": "^1.5",
         "lexik/jwt-authentication-bundle": "^3.1",
         "nelmio/cors-bundle": "^2.5",
         "symfony/console": "7.3.*",
@@ -62,8 +63,7 @@
         "symfony/css-selector": "^7",
         "symfony/debug-bundle": "^7",
         "symfony/maker-bundle": "^1.36",
-        "symfony/stopwatch": "^7",
-        "symfony/web-profiler-bundle": "^7"
+        "symfony/stopwatch": "^7"
     },
     "config": {
         "allow-plugins": {

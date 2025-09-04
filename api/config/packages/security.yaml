@@ -34,15 +34,27 @@ security:
             stateless: true
             jwt: ~
             entry_point: 'jwt'
+            refresh_jwt:
+                check_path: /api/token/refresh
 
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
     access_control:
+        # General product endpoints (less specific patterns)
+        - { path: ^/api/auth$, roles: PUBLIC_ACCESS }
         - { path: ^/api/products, roles: PUBLIC_ACCESS, methods: [ GET ] }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api/products, roles: 'ROLE_MERCHANT', methods: [ POST,PUT,PATCH,DELETE ] }
-        - { path: ^/api/follows, roles: 'ROLE_BUYER' }
+        # Merchant-specific endpoints first (more specific patterns)
+        - { path: ^/api/products/my-products, roles: 'ROLE_MERCHANT' }
+        - { path: ^/api/products/\d+/follow, roles: 'ROLE_BUYER' }
+        - { path: ^/api/products/\d+/unfollow, roles: 'ROLE_BUYER' }
+        - { path: ^/api/products/followed, roles: 'ROLE_BUYER' }
+
+
+
 
 when@test:
     security:

@@ -8,7 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-readonly class ProfileService
+readonly class UserService
 {
     public function __construct(
         private EntityManagerInterface $entityManager,

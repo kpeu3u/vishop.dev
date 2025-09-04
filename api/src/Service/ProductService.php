@@ -27,10 +27,16 @@ readonly class ProductService
 
     /**
      * @param array<string, mixed> $productData
+     *
      * @return array{success: bool, error?: string, errors?: array<string, string>, product?: array<string, mixed>}
      */
     public function createProduct(array $productData, User $merchant): array
     {
+        error_log('=== ProductService::createProduct called ===');
+        error_log('Merchant ID: ' . $merchant->getId());
+        error_log('Merchant Email: ' . $merchant->getEmail());
+        error_log('Is merchant managed by EntityManager: ' . ($this->entityManager->contains($merchant) ? 'YES' : 'NO'));
+
         if (!$merchant->isMerchant()) {
             return [
                 'success' => false,
@@ -47,6 +53,15 @@ readonly class ProductService
         }
 
         try {
+            // Ensure the merchant is properly managed by the EntityManager
+            if (!$this->entityManager->contains($merchant)) {
+                error_log('Merchant not managed by EntityManager, refreshing...');
+                $merchant = $this->entityManager->find(User::class, $merchant->getId());
+                if (!$merchant) {
+                    throw new \Exception('Merchant user not found in database');
+                }
+            }
+
             $product = $this->createProductByType($productData['type'], $productData);
             $product->setMerchant($merchant);
 
@@ -66,11 +81,16 @@ readonly class ProductService
             $this->entityManager->persist($product);
             $this->entityManager->flush();
 
+            error_log('Product created successfully with ID: ' . $product->getId());
+
             return [
                 'success' => true,
                 'product' => $this->formatProduct($product),
             ];
         } catch (\Exception $e) {
+            error_log('Product creation failed: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+
             return [
                 'success' => false,
                 'error' => 'Failed to create product: ' . $e->getMessage(),
@@ -80,6 +100,7 @@ readonly class ProductService
 
     /**
      * @param array<string, mixed> $productData
+     *
      * @return array{success: bool, error?: string, errors?: array<string, string>, product?: array<string, mixed>}
      */
     public function updateProduct(Product $product, array $productData, User $merchant): array
@@ -330,13 +351,13 @@ readonly class ProductService
         }
 
         $numberOfDoors = $data['numberOfDoors'] ?? 4;
-        if (is_int($numberOfDoors) || (is_string($numberOfDoors) && ctype_digit($numberOfDoors))) {
+        if (\is_int($numberOfDoors) || (\is_string($numberOfDoors) && ctype_digit($numberOfDoors))) {
             $car->setNumberOfDoors((int) $numberOfDoors);
         } else {
             $car->setNumberOfDoors(4);
         }
 
-        if (isset($data['category']) && is_string($data['category'])) {
+        if (isset($data['category']) && \is_string($data['category'])) {
             $car->setCategory(CarCategory::from($data['category']));
         }
 
@@ -359,7 +380,7 @@ readonly class ProductService
         }
 
         $numberOfBeds = $data['numberOfBeds'] ?? 1;
-        if (is_int($numberOfBeds) || (is_string($numberOfBeds) && ctype_digit($numberOfBeds))) {
+        if (\is_int($numberOfBeds) || (\is_string($numberOfBeds) && ctype_digit($numberOfBeds))) {
             $truck->setNumberOfBeds((int) $numberOfBeds);
         } else {
             $truck->setNumberOfBeds(1);
@@ -377,14 +398,14 @@ readonly class ProductService
         $this->setCommonProductData($trailer, $data);
 
         $numberOfAxles = $data['numberOfAxles'] ?? 1;
-        if (is_int($numberOfAxles) || (is_string($numberOfAxles) && ctype_digit($numberOfAxles))) {
+        if (\is_int($numberOfAxles) || (\is_string($numberOfAxles) && ctype_digit($numberOfAxles))) {
             $trailer->setNumberOfAxles((int) $numberOfAxles);
         } else {
             $trailer->setNumberOfAxles(1);
         }
 
         $loadCapacity = $data['loadCapacity'] ?? 0;
-        if (is_int($loadCapacity) || (is_string($loadCapacity) && ctype_digit($loadCapacity))) {
+        if (\is_int($loadCapacity) || (\is_string($loadCapacity) && ctype_digit($loadCapacity))) {
             $trailer->setLoadCapacity((int) $loadCapacity);
         } else {
             $trailer->setLoadCapacity(0);
@@ -399,10 +420,10 @@ readonly class ProductService
     private function setCommonProductData(Product $product, array $data): void
     {
         $brand = $data['brand'] ?? '';
-        $product->setBrand(is_string($brand) ? $brand : '');
+        $product->setBrand(\is_string($brand) ? $brand : '');
 
         $model = $data['model'] ?? '';
-        $product->setModel(is_string($model) ? $model : '');
+        $product->setModel(\is_string($model) ? $model : '');
 
         $price = $data['price'] ?? '0.00';
         if (is_numeric($price)) {
@@ -412,14 +433,14 @@ readonly class ProductService
         }
 
         $quantity = $data['quantity'] ?? 0;
-        if (is_int($quantity) || (is_string($quantity) && ctype_digit($quantity))) {
+        if (\is_int($quantity) || (\is_string($quantity) && ctype_digit($quantity))) {
             $product->setQuantity((int) $quantity);
         } else {
             $product->setQuantity(0);
         }
 
         $colour = $data['colour'] ?? '';
-        $product->setColour(is_string($colour) ? $colour : '');
+        $product->setColour(\is_string($colour) ? $colour : '');
     }
 
     /**
@@ -427,11 +448,11 @@ readonly class ProductService
      */
     private function updateProductData(Product $product, array $data): void
     {
-        if (isset($data['brand']) && is_string($data['brand'])) {
+        if (isset($data['brand']) && \is_string($data['brand'])) {
             $product->setBrand($data['brand']);
         }
 
-        if (isset($data['model']) && is_string($data['model'])) {
+        if (isset($data['model']) && \is_string($data['model'])) {
             $product->setModel($data['model']);
         }
 
@@ -439,11 +460,11 @@ readonly class ProductService
             $product->setPrice((string) $data['price']);
         }
 
-        if (isset($data['quantity']) && (is_int($data['quantity']) || (is_string($data['quantity']) && ctype_digit($data['quantity'])))) {
+        if (isset($data['quantity']) && (\is_int($data['quantity']) || (\is_string($data['quantity']) && ctype_digit($data['quantity'])))) {
             $product->setQuantity((int) $data['quantity']);
         }
 
-        if (isset($data['colour']) && is_string($data['colour'])) {
+        if (isset($data['colour']) && \is_string($data['colour'])) {
             $product->setColour($data['colour']);
         }
 
@@ -456,10 +477,10 @@ readonly class ProductService
             if (isset($data['engineCapacity']) && is_numeric($data['engineCapacity'])) {
                 $product->setEngineCapacity((string) $data['engineCapacity']);
             }
-            if (isset($data['numberOfDoors']) && (is_int($data['numberOfDoors']) || (is_string($data['numberOfDoors']) && ctype_digit($data['numberOfDoors'])))) {
+            if (isset($data['numberOfDoors']) && (\is_int($data['numberOfDoors']) || (\is_string($data['numberOfDoors']) && ctype_digit($data['numberOfDoors'])))) {
                 $product->setNumberOfDoors((int) $data['numberOfDoors']);
             }
-            if (isset($data['category']) && is_string($data['category'])) {
+            if (isset($data['category']) && \is_string($data['category'])) {
                 $product->setCategory(CarCategory::from($data['category']));
             }
         }
@@ -468,16 +489,16 @@ readonly class ProductService
             if (isset($data['engineCapacity']) && is_numeric($data['engineCapacity'])) {
                 $product->setEngineCapacity((string) $data['engineCapacity']);
             }
-            if (isset($data['numberOfBeds']) && (is_int($data['numberOfBeds']) || (is_string($data['numberOfBeds']) && ctype_digit($data['numberOfBeds'])))) {
+            if (isset($data['numberOfBeds']) && (\is_int($data['numberOfBeds']) || (\is_string($data['numberOfBeds']) && ctype_digit($data['numberOfBeds'])))) {
                 $product->setNumberOfBeds((int) $data['numberOfBeds']);
             }
         }
 
         if ($product instanceof Trailer) {
-            if (isset($data['numberOfAxles']) && (is_int($data['numberOfAxles']) || (is_string($data['numberOfAxles']) && ctype_digit($data['numberOfAxles'])))) {
+            if (isset($data['numberOfAxles']) && (\is_int($data['numberOfAxles']) || (\is_string($data['numberOfAxles']) && ctype_digit($data['numberOfAxles'])))) {
                 $product->setNumberOfAxles((int) $data['numberOfAxles']);
             }
-            if (isset($data['loadCapacity']) && (is_int($data['loadCapacity']) || (is_string($data['loadCapacity']) && ctype_digit($data['loadCapacity'])))) {
+            if (isset($data['loadCapacity']) && (\is_int($data['loadCapacity']) || (\is_string($data['loadCapacity']) && ctype_digit($data['loadCapacity'])))) {
                 $product->setLoadCapacity((int) $data['loadCapacity']);
             }
         }
