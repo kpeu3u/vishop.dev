@@ -9,6 +9,7 @@ import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
 import ResetPasswordForm from './components/auth/ResetPasswordForm';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ProfilePage from './components/profile/ProfilePage';
+import Dashboard from './components/dashboard/Dashboard';
 
 // Product Components
 import ProductList from './components/products/ProductList';
@@ -18,18 +19,6 @@ import MyProducts from './components/products/MyProducts';
 import FollowedProducts from './components/products/FollowedProducts';
 
 import './App.css';
-
-// Dashboard component
-const Dashboard = () => (
-    <Container className="my-4">
-        <Row>
-            <Col>
-                <h1 className="display-4 mb-4">Dashboard</h1>
-                <p className="lead">Welcome to your dashboard!</p>
-            </Col>
-        </Row>
-    </Container>
-);
 
 const Home = () => (
     <div className="bg-light">
