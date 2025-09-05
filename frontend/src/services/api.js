@@ -20,12 +20,48 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// Handle authentication errors - but don't auto-logout on page refresh
+// Update the response interceptor to handle token refresh
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
+    async (error) => {
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+
+            try {
+                // Try to refresh the token
+                const refreshToken = localStorage.getItem('refresh_token');
+                if (refreshToken) {
+                    const refreshResponse = await api.post('/api/token/refresh', {
+                        refresh_token: refreshToken
+                    });
+
+                    if (refreshResponse.data.token) {
+                        localStorage.setItem('jwt_token', refreshResponse.data.token);
+                        if (refreshResponse.data.refresh_token) {
+                            localStorage.setItem('refresh_token', refreshResponse.data.refresh_token);
+                        }
+
+                        // Retry the original request with new token
+                        originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.token}`;
+                        return api(originalRequest);
+                    }
+                }
+            } catch (refreshError) {
+                console.error('Token refresh failed:', refreshError);
+                // Clear all tokens and redirect to login
+                localStorage.removeItem('jwt_token');
+                localStorage.removeItem('refresh_token');
+                localStorage.removeItem('user_data');
+                window.location.href = '/login';
+                return Promise.reject(refreshError);
+            }
+        }
+
         if (error.response?.status === 401) {
             localStorage.removeItem('jwt_token');
+            localStorage.removeItem('refresh_token');
             localStorage.removeItem('user_data');
             window.location.href = '/login';
         }
@@ -58,6 +94,42 @@ export const authAPI = {
     getCurrentUser: async () => {
         const response = await api.get('/api/user/profile');
         return response.data;
+    },
+
+    refreshToken: async () => {
+        try {
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (!refreshToken) {
+                throw new Error('No refresh token available');
+            }
+
+            const response = await api.post('/api/token/refresh', {
+                refresh_token: refreshToken
+            });
+
+            // Store new tokens
+            if (response.data.token) {
+                localStorage.setItem('jwt_token', response.data.token);
+            }
+            if (response.data.refresh_token) {
+                localStorage.setItem('refresh_token', response.data.refresh_token);
+            }
+
+            return response.data;
+        } catch (error) {
+            // If refresh fails, clear all tokens
+            localStorage.removeItem('jwt_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user_data');
+            throw {
+                response: {
+                    data: {
+                        success: false,
+                        error: error.response?.data?.error || 'Token refresh failed'
+                    }
+                }
+            };
+        }
     },
 
     // Password reset methods

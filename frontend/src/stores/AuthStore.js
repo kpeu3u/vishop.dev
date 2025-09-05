@@ -50,7 +50,7 @@ class AuthStore {
                     this.user = completeUser;
                     this.isAuthenticated = true;
                 });
-                
+                this.verifyToken();
             } catch (error) {
                 this.logout();
             }
@@ -81,6 +81,7 @@ class AuthStore {
         }
     }
 
+    // Update the login method to store refresh token
     async login(email, password) {
         runInAction(() => {
             this.isLoading = true;
@@ -108,6 +109,11 @@ class AuthStore {
 
                 localStorage.setItem('jwt_token', response.token);
                 localStorage.setItem('user_data', JSON.stringify(user));
+                
+                // Store refresh token if provided
+                if (response.refresh_token) {
+                    localStorage.setItem('refresh_token', response.refresh_token);
+                }
 
                 runInAction(() => {
                     this.user = user;
@@ -218,6 +224,7 @@ class AuthStore {
         });
     }
 
+    // Update logout method to clear refresh token
     async logout() {
         runInAction(() => {
             this.isLoading = true;
@@ -231,6 +238,7 @@ class AuthStore {
         }
 
         localStorage.removeItem('jwt_token');
+        localStorage.removeItem('refresh_token');
         localStorage.removeItem('user_data');
 
         runInAction(() => {
@@ -239,6 +247,60 @@ class AuthStore {
             this.isLoading = false;
             this.error = null;
         });
+    }
+
+    // Add manual refresh token method
+    async refreshToken() {
+        runInAction(() => {
+            this.isLoading = true;
+            this.error = null;
+        });
+
+        try {
+            const response = await authAPI.refreshToken();
+
+            // Update user data if provided
+            if (response.user) {
+                runInAction(() => {
+                    this.user = response.user;
+                });
+                localStorage.setItem('user_data', JSON.stringify(response.user));
+            }
+
+            runInAction(() => {
+                this.isLoading = false;
+            });
+
+            return { success: true };
+        } catch (error) {
+            runInAction(() => {
+                this.handleError(error);
+                this.isLoading = false;
+            });
+
+            // If refresh fails, logout user
+            await this.logout();
+            return { success: false };
+        }
+    }
+
+    // Verify token method for explicit verification only
+    async verifyToken() {
+        try {
+            console.log('Verifying token...'); // Debug log
+            const userData = await authAPI.getCurrentUser();
+            runInAction(() => {
+                this.updateUser(userData);
+            });
+            return { success: true };
+        } catch (error) {
+            console.log('Token verification failed:', error); // Debug log
+            // Only logout if it's an authentication error
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                await this.logout();
+            }
+            return { success: false, error: error.message };
+        }
     }
 
     updateUser(userData) {
