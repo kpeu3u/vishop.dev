@@ -4,6 +4,7 @@ namespace App\EventListener;
 
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
 use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationSuccessEvent;
 use Lexik\Bundle\JWTAuthenticationBundle\Events;
@@ -13,7 +14,8 @@ class JWTAuthenticationSuccessListener implements EventSubscriberInterface
 {
     public function __construct(
         private readonly RefreshTokenManagerInterface $refreshTokenManager,
-        private readonly EntityManagerInterface $entityManager
+        private readonly RefreshTokenGeneratorInterface $refreshTokenGenerator,
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -43,10 +45,13 @@ class JWTAuthenticationSuccessListener implements EventSubscriberInterface
 
         // Generate and add refresh token to the response
         try {
-            $refreshToken = $this->refreshTokenManager->create();
-            $refreshToken->setUsername($user->getUserIdentifier());
-            $refreshToken->setRefreshToken();
-            $refreshToken->setValid((new \DateTime())->modify('+1 month'));
+            // Use the new API - TTL in seconds (30 days = 30 * 24 * 60 * 60 seconds)
+            $ttlInSeconds = 30 * 24 * 60 * 60; // 30 days
+
+            $refreshToken = $this->refreshTokenGenerator->createForUserWithTtl(
+                $user,
+                $ttlInSeconds
+            );
 
             $this->refreshTokenManager->save($refreshToken);
             $this->entityManager->flush();

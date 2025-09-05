@@ -33,13 +33,13 @@ final class AuthControllerTest extends WebTestCase
         );
 
         // Only check the message if we got JSON response from our controller
-        if ($contentType !== null && str_contains($contentType, 'application/json')) {
-            if ($response->getContent()){
+        if (null !== $contentType && str_contains($contentType, 'application/json')) {
+            if ($response->getContent()) {
                 $responseData = json_decode($response->getContent(), true);
                 if (!\is_array($responseData)) {
                     $this->fail('Response content is not valid JSON');
                 }
-                $message =  $responseData['message'] ?? '';
+                $message = $responseData['message'] ?? '';
                 $this->assertSame('Login endpoint - should not reach here', $message);
             } else {
                 $this->fail('Response content is empty');
@@ -114,7 +114,6 @@ final class AuthControllerTest extends WebTestCase
             [],
             ['CONTENT_TYPE' => 'application/json'],
             $credentials ?: null
-
         );
 
         // Should return 401 Unauthorized for invalid credentials
