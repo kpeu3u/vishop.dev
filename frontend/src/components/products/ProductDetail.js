@@ -68,6 +68,103 @@ const ProductDetail = observer(() => {
         }
     };
 
+    const renderVehicleSpecificFields = (product) => {
+        switch (product.type) {
+            case 'car':
+                return (
+                    <>
+                        {product.colour && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Colour:</strong>
+                                <span>{product.colour}</span>
+                            </ListGroup.Item>
+                        )}
+                        {product.engineCapacity && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Engine Capacity:</strong>
+                                <span>{product.engineCapacity}L</span>
+                            </ListGroup.Item>
+                        )}
+                        {product.numberOfDoors && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Number of Doors:</strong>
+                                <span>{product.numberOfDoors}</span>
+                            </ListGroup.Item>
+                        )}
+                        {product.category && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Category:</strong>
+                                <span>{product.category.charAt(0).toUpperCase() + product.category.slice(1)}</span>
+                            </ListGroup.Item>
+                        )}
+                    </>
+                );
+
+            case 'motorcycle':
+                return (
+                    <>
+                        {product.colour && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Colour:</strong>
+                                <span>{product.colour}</span>
+                            </ListGroup.Item>
+                        )}
+                        {product.engineCapacity && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Engine Capacity:</strong>
+                                <span>{product.engineCapacity}L</span>
+                            </ListGroup.Item>
+                        )}
+                    </>
+                );
+
+            case 'truck':
+                return (
+                    <>
+                        {product.colour && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Colour:</strong>
+                                <span>{product.colour}</span>
+                            </ListGroup.Item>
+                        )}
+                        {product.engineCapacity && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Engine Capacity:</strong>
+                                <span>{product.engineCapacity}L</span>
+                            </ListGroup.Item>
+                        )}
+                        {product.numberOfBeds && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Number of Beds:</strong>
+                                <span>{product.numberOfBeds}</span>
+                            </ListGroup.Item>
+                        )}
+                    </>
+                );
+
+            case 'trailer':
+                return (
+                    <>
+                        {product.numberOfAxles && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Number of Axles:</strong>
+                                <span>{product.numberOfAxles}</span>
+                            </ListGroup.Item>
+                        )}
+                        {product.loadCapacity && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Load Capacity:</strong>
+                                <span>{product.loadCapacity.toLocaleString()} kg</span>
+                            </ListGroup.Item>
+                        )}
+                    </>
+                );
+
+            default:
+                return null;
+        }
+    };
+
     if (ProductStore.isLoading) {
         return (
             <Container className="my-5 text-center">
@@ -214,6 +311,7 @@ const ProductDetail = observer(() => {
                                 <strong>Type:</strong>
                                 <span>{product.type?.charAt(0).toUpperCase() + product.type?.slice(1)}</span>
                             </ListGroup.Item>
+                            {renderVehicleSpecificFields(product)}
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Quantity:</strong>
                                 <span>{product.quantity}</span>

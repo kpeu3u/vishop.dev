@@ -15,6 +15,11 @@ class Motorcycle extends Product
     #[Assert\Type(type: 'numeric', message: 'Engine capacity must be a number')]
     private string $engineCapacity;
 
+    #[ORM\Column(type: Types::STRING, length: 50, nullable: false)]
+    #[Assert\NotBlank(message: 'Colour is required')]
+    #[Assert\Length(max: 50)]
+    private string $colour;
+
     public function getEngineCapacity(): string
     {
         return $this->engineCapacity;
@@ -23,6 +28,18 @@ class Motorcycle extends Product
     public function setEngineCapacity(string $engineCapacity): self
     {
         $this->engineCapacity = $engineCapacity;
+
+        return $this;
+    }
+
+    public function getColour(): string
+    {
+        return $this->colour;
+    }
+
+    public function setColour(string $colour): self
+    {
+        $this->colour = $colour;
 
         return $this;
     }

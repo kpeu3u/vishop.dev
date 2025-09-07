@@ -14,9 +14,9 @@ const ProductForm = observer(() => {
         model: '',
         price: '',
         quantity: '',
-        colour: '',
         type: 'car',
         // Vehicle-specific fields
+        colour: '',
         engineCapacity: '',
         numberOfDoors: '4',
         category: 'sedan',
@@ -48,7 +48,7 @@ const ProductForm = observer(() => {
                 model: product.model || '',
                 price: product.price?.toString() || '',
                 quantity: product.quantity?.toString() || '',
-                colour: product.colour || '',
+                colour: product.colour.toString() || '',
                 type: product.type || 'car',
                 engineCapacity: product.engineCapacity?.toString() || '',
                 numberOfDoors: product.numberOfDoors?.toString() || '4',
@@ -154,7 +154,6 @@ const ProductForm = observer(() => {
             model: formData.model,
             price: parseFloat(formData.price),
             quantity: parseInt(formData.quantity, 10),
-            colour: formData.colour,
             type: formData.type
         };
 
@@ -163,11 +162,14 @@ const ProductForm = observer(() => {
             if (formData.engineCapacity) submitData.engineCapacity = parseFloat(formData.engineCapacity);
             if (formData.numberOfDoors) submitData.numberOfDoors = parseInt(formData.numberOfDoors, 10);
             if (formData.category) submitData.category = formData.category;
+            if (formData.colour) submitData.colour = formData.colour;
         } else if (formData.type === 'motorcycle') {
             if (formData.engineCapacity) submitData.engineCapacity = parseFloat(formData.engineCapacity);
+            if (formData.colour) submitData.colour = formData.colour;
         } else if (formData.type === 'truck') {
             if (formData.engineCapacity) submitData.engineCapacity = parseFloat(formData.engineCapacity);
             if (formData.numberOfBeds) submitData.numberOfBeds = parseInt(formData.numberOfBeds, 10);
+            if (formData.colour) submitData.colour = formData.colour;
         } else if (formData.type === 'trailer') {
             if (formData.numberOfAxles) submitData.numberOfAxles = parseInt(formData.numberOfAxles, 10);
             if (formData.loadCapacity) submitData.loadCapacity = parseInt(formData.loadCapacity, 10);
@@ -231,6 +233,20 @@ const ProductForm = observer(() => {
                 return (
                     <>
                         <Form.Group className="mb-3">
+                            <Form.Label>Colour *</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={formData.colour}
+                                onChange={(e) => handleChange('colour', e.target.value)}
+                                required
+                                isInvalid={ProductStore.validationErrors.colour}
+                            />
+                            <Form.Control.Feedback type="invalid">
+                                {ProductStore.validationErrors.colour}
+                            </Form.Control.Feedback>
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
                             <Form.Label>Engine Capacity (L) *</Form.Label>
                             <Form.Control
                                 type="number"
@@ -293,26 +309,54 @@ const ProductForm = observer(() => {
 
             case 'motorcycle':
                 return (
-                    <Form.Group className="mb-3">
-                        <Form.Label>Engine Capacity (L) *</Form.Label>
-                        <Form.Control
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            value={formData.engineCapacity}
-                            onChange={(e) => handleChange('engineCapacity', e.target.value)}
-                            required
-                            isInvalid={ProductStore.validationErrors.engineCapacity}
-                        />
-                        <Form.Control.Feedback type="invalid">
-                            {ProductStore.validationErrors.engineCapacity}
-                        </Form.Control.Feedback>
-                    </Form.Group>
+                    <>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Colour *</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={formData.colour}
+                                onChange={(e) => handleChange('colour', e.target.value)}
+                                required
+                                isInvalid={ProductStore.validationErrors.colour}
+                            />
+                            <Form.Control.Feedback type="invalid">
+                                {ProductStore.validationErrors.colour}
+                            </Form.Control.Feedback>
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Engine Capacity (L) *</Form.Label>
+                            <Form.Control
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                value={formData.engineCapacity}
+                                onChange={(e) => handleChange('engineCapacity', e.target.value)}
+                                required
+                                isInvalid={ProductStore.validationErrors.engineCapacity}
+                            />
+                            <Form.Control.Feedback type="invalid">
+                                {ProductStore.validationErrors.engineCapacity}
+                            </Form.Control.Feedback>
+                        </Form.Group>
+                    </>
                 );
 
             case 'truck':
                 return (
                     <>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Colour *</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={formData.colour}
+                                onChange={(e) => handleChange('colour', e.target.value)}
+                                required
+                                isInvalid={ProductStore.validationErrors.colour}
+                            />
+                            <Form.Control.Feedback type="invalid">
+                                {ProductStore.validationErrors.colour}
+                            </Form.Control.Feedback>
+                        </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Engine Capacity (L) *</Form.Label>
                             <Form.Control
@@ -489,21 +533,6 @@ const ProductForm = observer(() => {
                                     />
                                     <Form.Control.Feedback type="invalid">
                                         {ProductStore.validationErrors.model}
-                                    </Form.Control.Feedback>
-                                </Form.Group>
-
-                                {/* Colour */}
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Colour *</Form.Label>
-                                    <Form.Control
-                                        type="text"
-                                        value={formData.colour}
-                                        onChange={(e) => handleChange('colour', e.target.value)}
-                                        required
-                                        isInvalid={ProductStore.validationErrors.colour}
-                                    />
-                                    <Form.Control.Feedback type="invalid">
-                                        {ProductStore.validationErrors.colour}
                                     </Form.Control.Feedback>
                                 </Form.Group>
 

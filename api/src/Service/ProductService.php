@@ -321,6 +321,11 @@ readonly class ProductService
             $motorcycle->setEngineCapacity('0.00');
         }
 
+        $colour = $data['colour'] ?? '';
+        if (\is_string($colour)) {
+            $motorcycle->setColour($colour);
+        }
+
         return $motorcycle;
     }
 
@@ -346,6 +351,11 @@ readonly class ProductService
             $car->setNumberOfDoors(4);
         }
 
+        $colour = $data['colour'] ?? '';
+        if (\is_string($colour)) {
+            $car->setColour($colour);
+        }
+
         if (isset($data['category']) && \is_string($data['category'])) {
             $car->setCategory(CarCategory::from($data['category']));
         }
@@ -366,6 +376,11 @@ readonly class ProductService
             $truck->setEngineCapacity((string) $engineCapacity);
         } else {
             $truck->setEngineCapacity('0.00');
+        }
+
+        $colour = $data['colour'] ?? '';
+        if (\is_string($colour)) {
+            $truck->setColour($colour);
         }
 
         $numberOfBeds = $data['numberOfBeds'] ?? 1;
@@ -427,9 +442,6 @@ readonly class ProductService
         } else {
             $product->setQuantity(0);
         }
-
-        $colour = $data['colour'] ?? '';
-        $product->setColour(\is_string($colour) ? $colour : '');
     }
 
     /**
@@ -453,13 +465,14 @@ readonly class ProductService
             $product->setQuantity((int) $data['quantity']);
         }
 
-        if (isset($data['colour']) && \is_string($data['colour'])) {
-            $product->setColour($data['colour']);
-        }
-
         // Update type-specific fields
-        if ($product instanceof Motorcycle && isset($data['engineCapacity']) && is_numeric($data['engineCapacity'])) {
-            $product->setEngineCapacity((string) $data['engineCapacity']);
+        if ($product instanceof Motorcycle) {
+            if (isset($data['engineCapacity']) && is_numeric($data['engineCapacity'])) {
+                $product->setEngineCapacity((string) $data['engineCapacity']);
+            }
+            if (isset($data['colour']) && \is_string($data['colour'])) {
+                $product->setColour($data['colour']);
+            }
         }
 
         if ($product instanceof Car) {
@@ -472,6 +485,9 @@ readonly class ProductService
             if (isset($data['category']) && \is_string($data['category'])) {
                 $product->setCategory(CarCategory::from($data['category']));
             }
+            if (isset($data['colour']) && \is_string($data['colour'])) {
+                $product->setColour($data['colour']);
+            }
         }
 
         if ($product instanceof Truck) {
@@ -480,6 +496,9 @@ readonly class ProductService
             }
             if (isset($data['numberOfBeds']) && (\is_int($data['numberOfBeds']) || (\is_string($data['numberOfBeds']) && ctype_digit($data['numberOfBeds'])))) {
                 $product->setNumberOfBeds((int) $data['numberOfBeds']);
+            }
+            if (isset($data['colour']) && \is_string($data['colour'])) {
+                $product->setColour($data['colour']);
             }
         }
 
@@ -505,7 +524,6 @@ readonly class ProductService
             'model' => $product->getModel(),
             'price' => $product->getPrice(),
             'quantity' => $product->getQuantity(),
-            'colour' => $product->getColour(),
             'merchant' => [
                 'id' => $product->getMerchant()->getId(),
                 'fullName' => $product->getMerchant()->getFullName(),
@@ -519,17 +537,20 @@ readonly class ProductService
         // Add type-specific data
         if ($product instanceof Motorcycle) {
             $data['engineCapacity'] = $product->getEngineCapacity();
+            $data['colour'] = $product->getColour();
         }
 
         if ($product instanceof Car) {
             $data['engineCapacity'] = $product->getEngineCapacity();
             $data['numberOfDoors'] = $product->getNumberOfDoors();
             $data['category'] = $product->getCategory()->value;
+            $data['colour'] = $product->getColour();
         }
 
         if ($product instanceof Truck) {
             $data['engineCapacity'] = $product->getEngineCapacity();
             $data['numberOfBeds'] = $product->getNumberOfBeds();
+            $data['colour'] = $product->getColour();
         }
 
         if ($product instanceof Trailer) {

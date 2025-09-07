@@ -49,11 +49,6 @@ abstract class Product
     #[Assert\Type(type: 'integer', message: 'Quantity must be an integer')]
     private int $quantity;
 
-    #[ORM\Column(type: Types::STRING, length: 50, nullable: false)]
-    #[Assert\NotBlank(message: 'Colour is required')]
-    #[Assert\Length(max: 50)]
-    private string $colour;
-
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
     private User $merchant;
@@ -125,18 +120,6 @@ abstract class Product
     public function setQuantity(int $quantity): self
     {
         $this->quantity = $quantity;
-
-        return $this;
-    }
-
-    public function getColour(): string
-    {
-        return $this->colour;
-    }
-
-    public function setColour(string $colour): self
-    {
-        $this->colour = $colour;
 
         return $this;
     }
