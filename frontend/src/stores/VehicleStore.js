@@ -1,11 +1,11 @@
 import { makeAutoObservable, runInAction } from 'mobx';
-import { productAPI } from '../services/api';
+import { vehicleAPI } from '../services/api';
 
-class ProductStore {
-    products = [];
-    followedProducts = [];
-    myProducts = [];
-    currentProduct = null;
+class VehicleStore {
+    vehicles = [];
+    followedVehicles = [];
+    myVehicles = [];
+    currentVehicle = null;
     isLoading = false;
     error = null;
     successMessage = null;
@@ -16,16 +16,16 @@ class ProductStore {
     }
 
     // Actions
-    async loadProducts(filters = {}) {
+    async loadVehicles(filters = {}) {
         runInAction(() => {
             this.isLoading = true;
             this.error = null;
         });
 
         try {
-            const response = await productAPI.getProducts(filters);
+            const response = await vehicleAPI.getVehicles(filters);
             runInAction(() => {
-                this.products = response.products;
+                this.vehicles = response.vehicles;
                 this.isLoading = false;
             });
         } catch (error) {
@@ -36,16 +36,16 @@ class ProductStore {
         }
     }
 
-    async searchProducts(searchTerm) {
+    async searchVehicles(searchTerm) {
         runInAction(() => {
             this.isLoading = true;
             this.error = null;
         });
 
         try {
-            const response = await productAPI.searchProducts(searchTerm);
+            const response = await vehicleAPI.searchVehicles(searchTerm);
             runInAction(() => {
-                this.products = response.products;
+                this.vehicles = response.vehicles;
                 this.isLoading = false;
             });
         } catch (error) {
@@ -56,17 +56,17 @@ class ProductStore {
         }
     }
 
-    async loadProduct(id) {
+    async loadVehicle(id) {
         runInAction(() => {
             this.isLoading = true;
             this.error = null;
-            this.currentProduct = null;
+            this.currentVehicle = null;
         });
 
         try {
-            const response = await productAPI.getProduct(id);
+            const response = await vehicleAPI.getVehicle(id);
             runInAction(() => {
-                this.currentProduct = response.product;
+                this.currentVehicle = response.vehicle;
                 this.isLoading = false;
             });
         } catch (error) {
@@ -77,7 +77,7 @@ class ProductStore {
         }
     }
 
-    async createProduct(productData) {
+    async createVehicle(vehicleData) {
         runInAction(() => {
             this.isLoading = true;
             this.error = null;
@@ -86,14 +86,14 @@ class ProductStore {
         });
 
         try {
-            const response = await productAPI.createProduct(productData);
+            const response = await vehicleAPI.createVehicle(vehicleData);
             if (response.success) {
                 runInAction(() => {
-                    this.successMessage = 'Product created successfully';
+                    this.successMessage = 'Vehicle created successfully';
                     this.isLoading = false;
                 });
-                this.loadMyProducts(); // Refresh merchant's products
-                return { success: true, product: response.product };
+                this.loadMyVehicles(); // Refresh merchant's vehicles
+                return { success: true, vehicle: response.vehicle };
             }
         } catch (error) {
             runInAction(() => {
@@ -108,7 +108,7 @@ class ProductStore {
         return { success: false };
     }
 
-    async updateProduct(id, productData) {
+    async updateVehicle(id, vehicleData) {
         runInAction(() => {
             this.isLoading = true;
             this.error = null;
@@ -117,17 +117,17 @@ class ProductStore {
         });
 
         try {
-            const response = await productAPI.updateProduct(id, productData);
+            const response = await vehicleAPI.updateVehicle(id, vehicleData);
             if (response.success) {
                 runInAction(() => {
-                    this.successMessage = 'Product updated successfully';
-                    if (this.currentProduct && this.currentProduct.id === id) {
-                        this.currentProduct = response.product;
+                    this.successMessage = 'Vehicle updated successfully';
+                    if (this.currentVehicle && this.currentVehicle.id === id) {
+                        this.currentVehicle = response.vehicle;
                     }
                     this.isLoading = false;
                 });
-                this.loadMyProducts(); // Refresh merchant's products
-                return { success: true, product: response.product };
+                this.loadMyVehicles(); // Refresh merchant's vehicles
+                return { success: true, vehicle: response.vehicle };
             }
         } catch (error) {
             runInAction(() => {
@@ -142,22 +142,22 @@ class ProductStore {
         return { success: false };
     }
 
-    async deleteProduct(id) {
+    async deleteVehicle(id) {
         runInAction(() => {
             this.isLoading = true;
             this.error = null;
         });
 
         try {
-            const response = await productAPI.deleteProduct(id);
+            const response = await vehicleAPI.deleteVehicle(id);
             if (response.success) {
                 runInAction(() => {
-                    this.successMessage = 'Product deleted successfully';
-                    // Remove from products list if it's there
-                    this.products = this.products.filter(p => p.id !== id);
+                    this.successMessage = 'Vehicle deleted successfully';
+                    // Remove from vehicles list if it's there
+                    this.vehicles = this.vehicles.filter(p => p.id !== id);
                     this.isLoading = false;
                 });
-                this.loadMyProducts(); // Refresh merchant's products
+                this.loadMyVehicles(); // Refresh merchant's vehicles
                 return { success: true };
             }
         } catch (error) {
@@ -173,16 +173,16 @@ class ProductStore {
         return { success: false };
     }
 
-    async loadMyProducts() {
+    async loadMyVehicles() {
         runInAction(() => {
             this.isLoading = true;
             this.error = null;
         });
 
         try {
-            const response = await productAPI.getMyProducts();
+            const response = await vehicleAPI.getMyVehicles();
             runInAction(() => {
-                this.myProducts = response.products;
+                this.myVehicles = response.vehicles;
                 this.isLoading = false;
             });
         } catch (error) {
@@ -193,16 +193,16 @@ class ProductStore {
         }
     }
 
-    async followProduct(id) {
+    async followVehicle(id) {
         try {
-            const response = await productAPI.followProduct(id);
+            const response = await vehicleAPI.followVehicle(id);
             if (response.success) {
                 runInAction(() => {
-                    this.successMessage = 'Product followed successfully';
-                    // Update current product if it's loaded
-                    if (this.currentProduct && this.currentProduct.id === id) {
-                        this.currentProduct.isFollowed = true;
-                        this.currentProduct.followersCount = (this.currentProduct.followersCount || 0) + 1;
+                    this.successMessage = 'Vehicle followed successfully';
+                    // Update current vehicle if it's loaded
+                    if (this.currentVehicle && this.currentVehicle.id === id) {
+                        this.currentVehicle.isFollowed = true;
+                        this.currentVehicle.followersCount = (this.currentVehicle.followersCount || 0) + 1;
                     }
                 });
                 return { success: true };
@@ -216,20 +216,20 @@ class ProductStore {
         return { success: false };
     }
 
-    async unfollowProduct(id) {
+    async unfollowVehicle(id) {
         try {
-            const response = await productAPI.unfollowProduct(id);
+            const response = await vehicleAPI.unfollowVehicle(id);
             if (response.success) {
                 runInAction(() => {
-                    this.successMessage = 'Product unfollowed successfully';
-                    // Update current product if it's loaded
-                    if (this.currentProduct && this.currentProduct.id === id) {
-                        this.currentProduct.isFollowed = false;
-                        this.currentProduct.followersCount = Math.max((this.currentProduct.followersCount || 1) - 1, 0);
+                    this.successMessage = 'Vehicle unfollowed successfully';
+                    // Update current vehicle if it's loaded
+                    if (this.currentVehicle && this.currentVehicle.id === id) {
+                        this.currentVehicle.isFollowed = false;
+                        this.currentVehicle.followersCount = Math.max((this.currentVehicle.followersCount || 1) - 1, 0);
                     }
                     
-                    // Remove from followed products
-                    this.followedProducts = this.followedProducts.filter(p => p.id !== id);
+                    // Remove from followed vehicles
+                    this.followedVehicles = this.followedVehicles.filter(p => p.id !== id);
                 });
                 return { success: true };
             }
@@ -242,16 +242,16 @@ class ProductStore {
         return { success: false };
     }
 
-    async loadFollowedProducts() {
+    async loadFollowedVehicles() {
         runInAction(() => {
             this.isLoading = true;
             this.error = null;
         });
 
         try {
-            const response = await productAPI.getFollowedProducts();
+            const response = await vehicleAPI.getFollowedVehicles();
             runInAction(() => {
-                this.followedProducts = response.products;
+                this.followedVehicles = response.vehicles;
                 this.isLoading = false;
             });
         } catch (error) {
@@ -264,7 +264,7 @@ class ProductStore {
 
     // Helper methods
     handleError(error) {
-        console.error('ProductStore error:', error);
+        console.error('VehicleStore error:', error);
 
         if (error.response?.data?.errors) {
             this.validationErrors = error.response.data.errors;
@@ -290,26 +290,26 @@ class ProductStore {
         });
     }
 
-    clearCurrentProduct() {
+    clearCurrentVehicle() {
         runInAction(() => {
-            this.currentProduct = null;
+            this.currentVehicle = null;
         });
     }
 
     // Getters
-    get availableProducts() {
-        return this.products.filter(product => product.quantity > 0);
+    get availableVehicles() {
+        return this.vehicles.filter(vehicle => vehicle.quantity > 0);
     }
 
-    get productsByType() {
-        return this.products.reduce((acc, product) => {
-            if (!acc[product.type]) {
-                acc[product.type] = [];
+    get vehiclesByType() {
+        return this.vehicles.reduce((acc, vehicle) => {
+            if (!acc[vehicle.type]) {
+                acc[vehicle.type] = [];
             }
-            acc[product.type].push(product);
+            acc[vehicle.type].push(vehicle);
             return acc;
         }, {});
     }
 }
 
-export default new ProductStore();
+export default new VehicleStore();

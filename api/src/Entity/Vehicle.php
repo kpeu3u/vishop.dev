@@ -3,15 +3,15 @@
 namespace App\Entity;
 
 use App\Enum\VehicleType;
-use App\Repository\ProductRepository;
+use App\Repository\VehicleRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity(repositoryClass: ProductRepository::class)]
-#[ORM\Table(name: 'products')]
+#[ORM\Entity(repositoryClass: VehicleRepository::class)]
+#[ORM\Table(name: 'vehicles')]
 #[ORM\InheritanceType('SINGLE_TABLE')]
 #[ORM\DiscriminatorColumn(name: 'vehicle_type', type: 'string')]
 #[ORM\DiscriminatorMap([
@@ -20,7 +20,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     'truck' => Truck::class,
     'trailer' => Trailer::class,
 ])]
-abstract class Product
+abstract class Vehicle
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -60,9 +60,9 @@ abstract class Product
     private ?\DateTime $updatedAt = null;
 
     /**
-     * @var Collection<int, ProductFollow>
+     * @var Collection<int, VehicleFollow>
      */
-    #[ORM\OneToMany(targetEntity: ProductFollow::class, mappedBy: 'product', cascade: ['remove'])]
+    #[ORM\OneToMany(targetEntity: VehicleFollow::class, mappedBy: 'vehicle', cascade: ['remove'])]
     private Collection $follows;
 
     public function __construct()
@@ -154,24 +154,24 @@ abstract class Product
     }
 
     /**
-     * @return Collection<int, ProductFollow>
+     * @return Collection<int, VehicleFollow>
      */
     public function getFollows(): Collection
     {
         return $this->follows;
     }
 
-    public function addFollow(ProductFollow $follow): self
+    public function addFollow(VehicleFollow $follow): self
     {
         if (!$this->follows->contains($follow)) {
             $this->follows->add($follow);
-            $follow->setProduct($this);
+            $follow->setVehicle($this);
         }
 
         return $this;
     }
 
-    public function removeFollow(ProductFollow $follow): self
+    public function removeFollow(VehicleFollow $follow): self
     {
         $this->follows->removeElement($follow);
 

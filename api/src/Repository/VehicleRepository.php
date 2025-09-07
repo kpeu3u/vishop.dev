@@ -2,28 +2,28 @@
 
 namespace App\Repository;
 
-use App\Entity\Product;
 use App\Entity\User;
+use App\Entity\Vehicle;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Product>
+ * @extends ServiceEntityRepository<Vehicle>
  *
- * @method Product|null find($id, $lockMode = null, $lockVersion = null)
- * @method Product|null findOneBy(array<string, mixed> $criteria, ?array<string, string> $orderBy = null)
- * @method Product[]    findAll()
- * @method Product[]    findBy(array<string, mixed> $criteria, ?array<string, string> $orderBy = null, $limit = null, $offset = null)
+ * @method Vehicle|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Vehicle|null findOneBy(array<string, mixed> $criteria, ?array<string, string> $orderBy = null)
+ * @method Vehicle[]    findAll()
+ * @method Vehicle[]    findBy(array<string, mixed> $criteria, ?array<string, string> $orderBy = null, $limit = null, $offset = null)
  */
-class ProductRepository extends ServiceEntityRepository
+class VehicleRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Product::class);
+        parent::__construct($registry, Vehicle::class);
     }
 
-    public function save(Product $entity, bool $flush = false): void
+    public function save(Vehicle $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);
 
@@ -32,7 +32,7 @@ class ProductRepository extends ServiceEntityRepository
         }
     }
 
-    public function remove(Product $entity, bool $flush = false): void
+    public function remove(Vehicle $entity, bool $flush = false): void
     {
         $this->getEntityManager()->remove($entity);
 
@@ -42,7 +42,7 @@ class ProductRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return Product[] Returns an array of Product objects
+     * @return Vehicle[] Returns an array of Vehicle objects
      */
     public function findByMerchant(User $merchant): array
     {
@@ -55,9 +55,9 @@ class ProductRepository extends ServiceEntityRepository
     }
 
     /**
-     * @return Product[] Returns an array of available products (quantity > 0)
+     * @return Vehicle[] Returns an array of available vehicles (quantity > 0)
      */
-    public function findAvailableProducts(): array
+    public function findAvailableVehicles(): array
     {
         return $this->createQueryBuilder('p')
             ->andWhere('p.quantity > 0')
@@ -67,13 +67,13 @@ class ProductRepository extends ServiceEntityRepository
     }
 
     /**
-     * Returns products followed by a specific user.
+     * Returns vehicles followed by a specific user.
      *
-     * @return Product[]
+     * @return Vehicle[]
      */
     public function findFollowedByUser(User $user): array
     {
-        /** @var Product[] $result */
+        /** @var Vehicle[] $result */
         $result = $this->createQueryBuilder('p')
             ->innerJoin('p.follows', 'f')
             ->andWhere('f.user = :user')
@@ -86,11 +86,11 @@ class ProductRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find products with filters.
+     * Find vehicles with filters.
      *
      * @param array<string, mixed> $filters
      *
-     * @return Product[]
+     * @return Vehicle[]
      */
     public function findWithFilters(array $filters): array
     {
@@ -104,11 +104,11 @@ class ProductRepository extends ServiceEntityRepository
     }
 
     /**
-     * Search products by brand and model.
+     * Search vehicles by brand and model.
      *
-     * @return Product[]
+     * @return Vehicle[]
      */
-    public function searchProducts(string $searchTerm): array
+    public function searchVehicles(string $searchTerm): array
     {
         $qb = $this->createQueryBuilder('p');
 

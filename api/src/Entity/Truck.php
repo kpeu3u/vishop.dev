@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
-class Truck extends Product
+class Truck extends Vehicle
 {
     #[ORM\Column(type: Types::DECIMAL, precision: 8, scale: 2, nullable: false)]
     #[Assert\NotBlank(message: 'Engine capacity is required')]

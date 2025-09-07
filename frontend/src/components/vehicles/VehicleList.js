@@ -1,43 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Container, Row, Col, Card, Button, Spinner, Alert, Form, InputGroup } from 'react-bootstrap';
-import ProductStore from '../../stores/ProductStore';
-import ProductFilters from './ProductFilters';
-import ProductCard from './ProductCard';
+import VehicleStore from '../../stores/VehicleStore';
+import VehicleFilters from './VehicleFilters';
+import VehicleCard from './VehicleCard';
 
-const ProductList = observer(() => {
+const VehicleList = observer(() => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState({});
 
     useEffect(() => {
-        ProductStore.loadProducts();
-        return () => ProductStore.clearMessages();
+        VehicleStore.loadVehicles();
+        return () => VehicleStore.clearMessages();
     }, []);
 
     const handleSearch = async (e) => {
         e.preventDefault();
         if (searchTerm.trim()) {
-            await ProductStore.searchProducts(searchTerm);
+            await VehicleStore.searchVehicles(searchTerm);
         } else {
-            await ProductStore.loadProducts(filters);
+            await VehicleStore.loadVehicles(filters);
         }
     };
 
     const handleFilterChange = async (newFilters) => {
         setFilters(newFilters);
-        await ProductStore.loadProducts(newFilters);
+        await VehicleStore.loadVehicles(newFilters);
     };
 
     const clearSearch = async () => {
         setSearchTerm('');
-        await ProductStore.loadProducts(filters);
+        await VehicleStore.loadVehicles(filters);
     };
 
     return (
         <Container className="my-4">
             <Row>
                 <Col>
-                    <h2 className="mb-4">Products</h2>
+                    <h2 className="mb-4">Vehicles</h2>
                 </Col>
             </Row>
 
@@ -48,7 +48,7 @@ const ProductList = observer(() => {
                         <InputGroup>
                             <Form.Control
                                 type="text"
-                                placeholder="Search products..."
+                                placeholder="Search vehicles..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -69,39 +69,39 @@ const ProductList = observer(() => {
             <Row>
                 {/* Filters Sidebar */}
                 <Col md={3}>
-                    <ProductFilters onFilterChange={handleFilterChange} />
+                    <VehicleFilters onFilterChange={handleFilterChange} />
                 </Col>
 
-                {/* Product Grid */}
+                {/* Vehicle Grid */}
                 <Col md={9}>
-                    {ProductStore.error && (
-                        <Alert variant="danger" dismissible onClose={() => ProductStore.clearMessages()}>
-                            {ProductStore.error}
+                    {VehicleStore.error && (
+                        <Alert variant="danger" dismissible onClose={() => VehicleStore.clearMessages()}>
+                            {VehicleStore.error}
                         </Alert>
                     )}
 
-                    {ProductStore.successMessage && (
-                        <Alert variant="success" dismissible onClose={() => ProductStore.clearMessages()}>
-                            {ProductStore.successMessage}
+                    {VehicleStore.successMessage && (
+                        <Alert variant="success" dismissible onClose={() => VehicleStore.clearMessages()}>
+                            {VehicleStore.successMessage}
                         </Alert>
                     )}
 
-                    {ProductStore.isLoading ? (
+                    {VehicleStore.isLoading ? (
                         <div className="text-center py-5">
                             <Spinner animation="border" role="status">
                                 <span className="visually-hidden">Loading...</span>
                             </Spinner>
-                            <p className="mt-2">Loading products...</p>
+                            <p className="mt-2">Loading vehicles...</p>
                         </div>
                     ) : (
                         <>
-                            {ProductStore.products.length === 0 ? (
+                            {VehicleStore.vehicles.length === 0 ? (
                                 <Card className="text-center py-5">
                                     <Card.Body>
                                         <i className="bi bi-inbox fs-1 text-muted mb-3 d-block"></i>
-                                        <h4>No products found</h4>
+                                        <h4>No vehicles found</h4>
                                         <p className="text-muted">
-                                            {searchTerm ? 'Try adjusting your search terms.' : 'No products match your current filters.'}
+                                            {searchTerm ? 'Try adjusting your search terms.' : 'No vehicles match your current filters.'}
                                         </p>
                                     </Card.Body>
                                 </Card>
@@ -109,14 +109,14 @@ const ProductList = observer(() => {
                                 <>
                                     <div className="d-flex justify-content-between align-items-center mb-3">
                                         <p className="text-muted mb-0">
-                                            {ProductStore.products.length} product{ProductStore.products.length !== 1 ? 's' : ''} found
+                                            {VehicleStore.vehicles.length} vehicle{VehicleStore.vehicles.length !== 1 ? 's' : ''} found
                                         </p>
                                     </div>
 
                                     <Row>
-                                        {ProductStore.products.map(product => (
-                                            <Col key={product.id} md={6} lg={4} className="mb-4">
-                                                <ProductCard product={product} />
+                                        {VehicleStore.vehicles.map(vehicle => (
+                                            <Col key={vehicle.id} md={6} lg={4} className="mb-4">
+                                                <VehicleCard vehicle={vehicle} />
                                             </Col>
                                         ))}
                                     </Row>
@@ -130,4 +130,4 @@ const ProductList = observer(() => {
     );
 });
 
-export default ProductList;
+export default VehicleList;

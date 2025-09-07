@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
-class Trailer extends Product
+class Trailer extends Vehicle
 {
     #[ORM\Column(type: Types::INTEGER, nullable: false)]
     #[Assert\NotBlank(message: 'Number of axles is required')]

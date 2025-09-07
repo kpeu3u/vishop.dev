@@ -2,14 +2,14 @@
 
 namespace App\Entity;
 
-use App\Repository\ProductFollowRepository;
+use App\Repository\VehicleFollowRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: ProductFollowRepository::class)]
-#[ORM\Table(name: 'product_follows')]
-#[ORM\UniqueConstraint(name: 'unique_user_product_follow', columns: ['user_id', 'product_id'])]
-class ProductFollow
+#[ORM\Entity(repositoryClass: VehicleFollowRepository::class)]
+#[ORM\Table(name: 'vehicle_follows')]
+#[ORM\UniqueConstraint(name: 'unique_user_vehicle_follow', columns: ['user_id', 'vehicle_id'])]
+class VehicleFollow
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -20,9 +20,9 @@ class ProductFollow
     #[ORM\JoinColumn(nullable: false)]
     private User $user;
 
-    #[ORM\ManyToOne(targetEntity: Product::class, inversedBy: 'follows')]
+    #[ORM\ManyToOne(targetEntity: Vehicle::class, inversedBy: 'follows')]
     #[ORM\JoinColumn(nullable: false)]
-    private Product $product;
+    private Vehicle $vehicle;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $followedAt;
@@ -49,14 +49,14 @@ class ProductFollow
         return $this;
     }
 
-    public function getProduct(): Product
+    public function getVehicle(): Vehicle
     {
-        return $this->product;
+        return $this->vehicle;
     }
 
-    public function setProduct(Product $product): self
+    public function setVehicle(Vehicle $vehicle): self
     {
-        $this->product = $product;
+        $this->vehicle = $vehicle;
 
         return $this;
     }

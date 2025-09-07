@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Service\ProductService;
+use App\Service\VehicleService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -11,11 +11,11 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/api/products', name: 'api_product_')]
-class ProductController extends AbstractController
+#[Route('/api/vehicles', name: 'api_vehicle_')]
+class VehicleController extends AbstractController
 {
     public function __construct(
-        private readonly ProductService $productService,
+        private readonly VehicleService $vehicleService,
     ) {
     }
 
@@ -40,11 +40,11 @@ class ProductController extends AbstractController
             $filters['inStock'] = $request->query->getBoolean('inStock');
         }
 
-        $products = $this->productService->getAllProducts($filters);
+        $vehicles = $this->vehicleService->getAllVehicles($filters);
 
         return $this->json([
             'success' => true,
-            'products' => $products,
+            'vehicles' => $vehicles,
         ]);
     }
 
@@ -60,37 +60,37 @@ class ProductController extends AbstractController
             ], 400);
         }
 
-        $products = $this->productService->searchProducts($searchTerm);
+        $vehicles = $this->vehicleService->searchVehicles($searchTerm);
 
         return $this->json([
             'success' => true,
-            'products' => $products,
+            'vehicles' => $vehicles,
         ]);
     }
 
     #[Route('/{id}', name: 'show', requirements: ['id' => Requirement::POSITIVE_INT], methods: ['GET'])]
     public function show(int $id): JsonResponse
     {
-        $product = $this->productService->getProductById($id);
+        $vehicle = $this->vehicleService->getVehicleById($id);
 
-        if (!$product) {
+        if (!$vehicle) {
             return $this->json([
                 'success' => false,
-                'error' => 'Product not found',
+                'error' => 'Vehicle not found',
             ], 404);
         }
 
-        $productData = $this->productService->formatProduct($product);
+        $vehicleData = $this->vehicleService->formatVehicle($vehicle);
 
         // Add follow status if user is authenticated and is a buyer
         $user = $this->getUser();
         if ($user instanceof User && $user->isBuyer()) {
-            $productData['isFollowed'] = $this->productService->isProductFollowedByUser($product, $user);
+            $vehicleData['isFollowed'] = $this->vehicleService->isVehicleFollowedByUser($vehicle, $user);
         }
 
         return $this->json([
             'success' => true,
-            'product' => $productData,
+            'vehicle' => $vehicleData,
         ]);
     }
 
@@ -108,7 +108,7 @@ class ProductController extends AbstractController
 
         $data = json_decode($request->getContent(), true);
 
-        if (!$this->isValidProductData($data)) {
+        if (!$this->isValidVehicleData($data)) {
             return $this->json([
                 'success' => false,
                 'error' => 'Invalid JSON data or non-string keys',
@@ -116,7 +116,7 @@ class ProductController extends AbstractController
         }
 
         /** @var array<string, mixed> $data */
-        $result = $this->productService->createProduct($data, $user);
+        $result = $this->vehicleService->createVehicle($data, $user);
 
         return $this->json($result, $result['success'] ? 201 : 400);
     }
@@ -133,18 +133,18 @@ class ProductController extends AbstractController
             ], 401);
         }
 
-        $product = $this->productService->getProductById($id);
+        $vehicle = $this->vehicleService->getVehicleById($id);
 
-        if (!$product) {
+        if (!$vehicle) {
             return $this->json([
                 'success' => false,
-                'error' => 'Product not found',
+                'error' => 'Vehicle not found',
             ], 404);
         }
 
         $data = json_decode($request->getContent(), true);
 
-        if (!$this->isValidProductData($data)) {
+        if (!$this->isValidVehicleData($data)) {
             return $this->json([
                 'success' => false,
                 'error' => 'Invalid JSON data or non-string keys',
@@ -152,7 +152,7 @@ class ProductController extends AbstractController
         }
 
         /** @var array<string, mixed> $data */
-        $result = $this->productService->updateProduct($product, $data, $user);
+        $result = $this->vehicleService->updateVehicle($vehicle, $data, $user);
 
         return $this->json($result, $result['success'] ? 200 : 400);
     }
@@ -169,23 +169,23 @@ class ProductController extends AbstractController
             ], 401);
         }
 
-        $product = $this->productService->getProductById($id);
+        $vehicle = $this->vehicleService->getVehicleById($id);
 
-        if (!$product) {
+        if (!$vehicle) {
             return $this->json([
                 'success' => false,
-                'error' => 'Product not found',
+                'error' => 'Vehicle not found',
             ], 404);
         }
 
-        $result = $this->productService->deleteProduct($product, $user);
+        $result = $this->vehicleService->deleteVehicle($vehicle, $user);
 
         return $this->json($result, $result['success'] ? 200 : 400);
     }
 
-    #[Route('/my-products', name: 'my_products', methods: ['GET'])]
+    #[Route('/my-vehicles', name: 'my_vehicles', methods: ['GET'])]
     #[IsGranted('ROLE_MERCHANT')]
-    public function myProducts(): JsonResponse
+    public function myVehicles(): JsonResponse
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -195,11 +195,11 @@ class ProductController extends AbstractController
             ], 401);
         }
 
-        $products = $this->productService->getProductsByMerchant($user);
+        $vehicles = $this->vehicleService->getVehiclesByMerchant($user);
 
         return $this->json([
             'success' => true,
-            'products' => $products,
+            'vehicles' => $vehicles,
         ]);
     }
 
@@ -215,16 +215,16 @@ class ProductController extends AbstractController
             ], 401);
         }
 
-        $product = $this->productService->getProductById($id);
+        $vehicle = $this->vehicleService->getVehicleById($id);
 
-        if (!$product) {
+        if (!$vehicle) {
             return $this->json([
                 'success' => false,
-                'error' => 'Product not found',
+                'error' => 'Vehicle not found',
             ], 404);
         }
 
-        $result = $this->productService->followProduct($product, $user);
+        $result = $this->vehicleService->followVehicle($vehicle, $user);
 
         return $this->json($result, $result['success'] ? 200 : 400);
     }
@@ -241,23 +241,23 @@ class ProductController extends AbstractController
             ], 401);
         }
 
-        $product = $this->productService->getProductById($id);
+        $vehicle = $this->vehicleService->getVehicleById($id);
 
-        if (!$product) {
+        if (!$vehicle) {
             return $this->json([
                 'success' => false,
-                'error' => 'Product not found',
+                'error' => 'Vehicle not found',
             ], 404);
         }
 
-        $result = $this->productService->unfollowProduct($product, $user);
+        $result = $this->vehicleService->unfollowVehicle($vehicle, $user);
 
         return $this->json($result, $result['success'] ? 200 : 400);
     }
 
     #[Route('/followed', name: 'followed', methods: ['GET'])]
     #[IsGranted('ROLE_BUYER')]
-    public function followedProducts(): JsonResponse
+    public function followedVehicles(): JsonResponse
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -267,18 +267,18 @@ class ProductController extends AbstractController
             ], 401);
         }
 
-        $products = $this->productService->getFollowedProducts($user);
+        $vehicles = $this->vehicleService->getFollowedVehicles($user);
 
         return $this->json([
             'success' => true,
-            'products' => $products,
+            'vehicles' => $vehicles,
         ]);
     }
 
     /**
      * Validates that the data is an associative array with string keys.
      */
-    private function isValidProductData(mixed $data): bool
+    private function isValidVehicleData(mixed $data): bool
     {
         if (!\is_array($data)) {
             return false;

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Spinner, Alert } from 'react-bootstrap';
 import { observer } from 'mobx-react-lite';
 import { useAuth } from '../../contexts/AuthContext';
-import productStore from '../../stores/ProductStore';
+import vehicleStore from '../../stores/VehicleStore';
 import BuyerDashboard from './BuyerDashboard';
 import MerchantDashboard from './MerchantDashboard';
 
@@ -14,13 +14,13 @@ const Dashboard = observer(() => {
         const loadDashboardData = async () => {
             setIsLoading(true);
             try {
-                // Load basic product data for stats
-                await productStore.loadProducts({ limit: 5 });
+                // Load basic vehicle data for stats
+                await vehicleStore.loadVehicles({ limit: 5 });
 
                 if (authStore.isMerchant()) {
-                    await productStore.loadMyProducts();
+                    await vehicleStore.loadMyVehicles();
                 } else if (authStore.isBuyer()) {
-                    await productStore.loadFollowedProducts();
+                    await vehicleStore.loadFollowedVehicles();
                 }
             } catch (error) {
                 console.error('Error loading dashboard data:', error);
@@ -66,9 +66,9 @@ const Dashboard = observer(() => {
                         </div>
                     </div>
 
-                    {productStore.error && (
-                        <Alert variant="danger" dismissible onClose={() => productStore.clearMessages()}>
-                            {productStore.error}
+                    {vehicleStore.error && (
+                        <Alert variant="danger" dismissible onClose={() => vehicleStore.clearMessages()}>
+                            {vehicleStore.error}
                         </Alert>
                     )}
 

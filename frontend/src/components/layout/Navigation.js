@@ -41,13 +41,13 @@ const Navigation = observer(() => {
                             Home
                         </NavLink>
                         <NavLink
-                            to="/products"
+                            to="/vehicles"
                             className={({ isActive }) =>
                                 `nav-link ${isActive ? 'active' : ''}`
                             }
                         >
                             <i className="bi bi-car-front me-1"></i>
-                            Browse Products
+                            Browse Vehicles
                         </NavLink>
                         
                         {isAuthenticated && (
@@ -64,7 +64,7 @@ const Navigation = observer(() => {
                                 {authStore.isMerchant() && (
                                     <>
                                         <NavLink 
-                                            to="/products/new"
+                                            to="/vehicles/new"
                                             className={({ isActive }) => 
                                                 `nav-link ${isActive ? 'active' : ''}`
                                             }
@@ -73,13 +73,13 @@ const Navigation = observer(() => {
                                             Add Vehicle
                                         </NavLink>
                                         <NavLink
-                                            to="/my-products"
+                                            to="/my-vehicles"
                                             className={({ isActive }) =>
                                                 `nav-link ${isActive ? 'active' : ''}`
                                             }
                                         >
                                                 <i className="bi bi-box me-1"></i>
-                                                My Products
+                                                My Vehicles
                                         </NavLink>
                                     </>
                                 )}
