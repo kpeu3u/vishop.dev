@@ -10,12 +10,12 @@ use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationSuccessEvent;
 use Lexik\Bundle\JWTAuthenticationBundle\Events;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class JWTAuthenticationSuccessListener implements EventSubscriberInterface
+readonly class JWTAuthenticationSuccessListener implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly RefreshTokenManagerInterface $refreshTokenManager,
-        private readonly RefreshTokenGeneratorInterface $refreshTokenGenerator,
-        private readonly EntityManagerInterface $entityManager,
+        private RefreshTokenManagerInterface   $refreshTokenManager,
+        private RefreshTokenGeneratorInterface $refreshTokenGenerator,
+        private EntityManagerInterface         $entityManager,
     ) {
     }
 

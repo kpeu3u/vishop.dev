@@ -35,6 +35,10 @@ api.interceptors.response.use(
                 if (refreshToken) {
                     const refreshResponse = await api.post('/api/token/refresh', {
                         refresh_token: refreshToken
+                    }, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
                     });
 
                     if (refreshResponse.data.token) {
@@ -70,7 +74,6 @@ api.interceptors.response.use(
     }
 );
 
-// Auth API methods
 export const authAPI = {
     login: async (email, password) => {
         const response = await api.post('/api/auth/login', {
@@ -103,19 +106,22 @@ export const authAPI = {
                 throw new Error('No refresh token available');
             }
 
-            const response = await api.post('/api/token/refresh', {
+            const refreshResponse = await api.post('/api/token/refresh', {
                 refresh_token: refreshToken
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             });
-
             // Store new tokens
-            if (response.data.token) {
-                localStorage.setItem('jwt_token', response.data.token);
+            if (refreshResponse.data.token) {
+                localStorage.setItem('jwt_token', refreshResponse.data.token);
             }
-            if (response.data.refresh_token) {
-                localStorage.setItem('refresh_token', response.data.refresh_token);
+            if (refreshResponse.data.refresh_token) {
+                localStorage.setItem('refresh_token', refreshResponse.data.refresh_token);
             }
 
-            return response.data;
+            return refreshResponse.data;
         } catch (error) {
             // If refresh fails, clear all tokens
             localStorage.removeItem('jwt_token');

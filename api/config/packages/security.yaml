@@ -45,6 +45,9 @@ security:
         # Auth endpoints (public access)
         - { path: ^/api/auth, roles: PUBLIC_ACCESS }
 
+        # Token refresh endpoint (public access)
+        - { path: ^/api/token/refresh, roles: PUBLIC_ACCESS }
+
         # Buyer-specific endpoints (most specific patterns first)
         - { path: ^/api/vehicles/\d+/follow, roles: 'ROLE_BUYER', methods: [POST] }
         - { path: ^/api/vehicles/\d+/unfollow, roles: 'ROLE_BUYER', methods: [DELETE] }
@@ -60,9 +63,6 @@ security:
 
         # All other API endpoints require authentication
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
-
-
-
 
 when@test:
     security:

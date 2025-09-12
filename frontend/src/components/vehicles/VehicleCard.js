@@ -33,6 +33,7 @@ const VehicleCard = observer(({ vehicle }) => {
             case 'motorcycle': return 'bi-bicycle';
             case 'truck': return 'bi-truck';
             case 'trailer': return 'bi-truck-flatbed';
+            case 'cart': return 'bi-minecart';
             default: return 'bi-car-front';
         }
     };
@@ -43,6 +44,7 @@ const VehicleCard = observer(({ vehicle }) => {
             case 'motorcycle': return 'success';
             case 'truck': return 'warning';
             case 'trailer': return 'info';
+            case 'cart': return 'secondary';
             default: return 'secondary';
         }
     };
@@ -83,17 +85,6 @@ const VehicleCard = observer(({ vehicle }) => {
                 {vehicle.brand && vehicle.model && (
                     <p className="text-muted mb-2">
                         <strong>{vehicle.brand}</strong> {vehicle.model}
-                    </p>
-                )}
-
-                {vehicle.description && (
-                    <p className="text-muted mb-3 flex-grow-1" style={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden'
-                    }}>
-                        {vehicle.description}
                     </p>
                 )}
 

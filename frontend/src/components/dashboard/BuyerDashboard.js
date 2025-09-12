@@ -148,7 +148,7 @@ const BuyerDashboard = observer(() => {
                                                     ${vehicle.price?.toLocaleString()}
                                                 </div>
                                                 <Badge bg={vehicle.type === 'car' ? 'primary' :
-                                                    vehicle.type === 'truck' ? 'success' :
+                                                        vehicle.type === 'truck' ? 'success' :
                                                         vehicle.type === 'motorcycle' ? 'warning' : 'info'}>
                                                     {vehicle.type || 'vehicle'}
                                                 </Badge>
@@ -188,6 +188,8 @@ const BuyerDashboard = observer(() => {
                                                         type === 'car' ? 'bi-car-front' :
                                                             type === 'truck' ? 'bi-truck' :
                                                                 type === 'motorcycle' ? 'bi-bicycle' :
+                                                                    type === 'cart' ? 'bi-minecart' :
+                                                                        type === 'trailer' ? 'bi-truck-flatbed' :
                                                                     'bi-gear'
                                                     } fs-3 text-primary`}></i>
                                                 </div>

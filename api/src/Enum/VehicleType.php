@@ -8,6 +8,7 @@ enum VehicleType: string
     case CAR = 'car';
     case TRUCK = 'truck';
     case TRAILER = 'trailer';
+    case CART = 'cart';
 
     public function getLabel(): string
     {
@@ -16,6 +17,7 @@ enum VehicleType: string
             self::CAR => 'Car',
             self::TRUCK => 'Truck',
             self::TRAILER => 'Trailer',
+            self::CART => 'Cart',
         };
     }
 

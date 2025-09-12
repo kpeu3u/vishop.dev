@@ -19,6 +19,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     'car' => Car::class,
     'truck' => Truck::class,
     'trailer' => Trailer::class,
+    'cart' => Cart::class,
 ])]
 abstract class Vehicle
 {
@@ -185,6 +186,7 @@ abstract class Vehicle
             Car::class => VehicleType::CAR,
             Truck::class => VehicleType::TRUCK,
             Trailer::class => VehicleType::TRAILER,
+            Cart::class => VehicleType::CART,
             default => throw new \InvalidArgumentException('Unknown vehicle type'),
         };
     }

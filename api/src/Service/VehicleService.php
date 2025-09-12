@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Car;
+use App\Entity\Cart;
 use App\Entity\Motorcycle;
 use App\Entity\Trailer;
 use App\Entity\Truck;
@@ -302,6 +303,7 @@ readonly class VehicleService
             'car' => $this->createCar($data),
             'truck' => $this->createTruck($data),
             'trailer' => $this->createTrailer($data),
+            'cart' => $this->createCart($data),
             default => throw new \InvalidArgumentException('Invalid vehicle type'),
         };
     }
@@ -360,6 +362,15 @@ readonly class VehicleService
             $car->setCategory(CarCategory::from($data['category']));
         }
 
+        // Fix: Cast to string, not int, since the trait expects string
+        $permittedMaximumMass = $data['permittedMaximumMass'] ?? 0;
+        if (is_numeric($permittedMaximumMass)) {
+            $car->setPermittedMaximumMass((int) $permittedMaximumMass);
+        } else {
+            $car->setPermittedMaximumMass(0);
+        }
+
+
         return $car;
     }
 
@@ -390,6 +401,14 @@ readonly class VehicleService
             $truck->setNumberOfBeds(1);
         }
 
+        $permittedMaximumMass = $data['permittedMaximumMass'] ?? 0;
+        if (is_numeric($permittedMaximumMass)) {
+            $truck->setPermittedMaximumMass((int) $permittedMaximumMass);
+        } else {
+            $truck->setPermittedMaximumMass(0);
+        }
+
+
         return $truck;
     }
 
@@ -415,7 +434,44 @@ readonly class VehicleService
             $trailer->setLoadCapacity(0);
         }
 
+        $permittedMaximumMass = $data['permittedMaximumMass'] ?? 0;
+        if (is_numeric($permittedMaximumMass)) {
+            $trailer->setPermittedMaximumMass((int) $permittedMaximumMass);
+        } else {
+            $trailer->setPermittedMaximumMass(0);
+        }
+
         return $trailer;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function createCart(array $data): Cart
+    {
+        $cart = new Cart();
+        $this->setCommonVehicleData($cart, $data);
+
+        $colour = $data['colour'] ?? '';
+        if (\is_string($colour)) {
+            $cart->setColour($colour);
+        }
+
+        $loadCapacity = $data['loadCapacity'] ?? 0;
+        if (\is_int($loadCapacity) || (\is_string($loadCapacity) && ctype_digit($loadCapacity))) {
+            $cart->setLoadCapacity((int) $loadCapacity);
+        } else {
+            $cart->setLoadCapacity(0);
+        }
+
+        $permittedMaximumMass = $data['permittedMaximumMass'] ?? 0;
+        if (is_numeric($permittedMaximumMass)) {
+            $cart->setPermittedMaximumMass((int) $permittedMaximumMass);
+        } else {
+            $cart->setPermittedMaximumMass(0);
+        }
+
+        return $cart;
     }
 
     /**
@@ -488,6 +544,9 @@ readonly class VehicleService
             if (isset($data['colour']) && \is_string($data['colour'])) {
                 $vehicle->setColour($data['colour']);
             }
+            if (isset($data['permittedMaximumMass']) && (\is_int($data['permittedMaximumMass']) || (\is_string($data['permittedMaximumMass']) && ctype_digit($data['permittedMaximumMass'])))) {
+                $vehicle->setPermittedMaximumMass((int) $data['permittedMaximumMass']);
+            }
         }
 
         if ($vehicle instanceof Truck) {
@@ -500,6 +559,9 @@ readonly class VehicleService
             if (isset($data['colour']) && \is_string($data['colour'])) {
                 $vehicle->setColour($data['colour']);
             }
+            if (isset($data['permittedMaximumMass']) && (\is_int($data['permittedMaximumMass']) || (\is_string($data['permittedMaximumMass']) && ctype_digit($data['permittedMaximumMass'])))) {
+                $vehicle->setPermittedMaximumMass((int) $data['permittedMaximumMass']);
+            }
         }
 
         if ($vehicle instanceof Trailer) {
@@ -508,6 +570,21 @@ readonly class VehicleService
             }
             if (isset($data['loadCapacity']) && (\is_int($data['loadCapacity']) || (\is_string($data['loadCapacity']) && ctype_digit($data['loadCapacity'])))) {
                 $vehicle->setLoadCapacity((int) $data['loadCapacity']);
+            }
+            if (isset($data['permittedMaximumMass']) && (\is_int($data['permittedMaximumMass']) || (\is_string($data['permittedMaximumMass']) && ctype_digit($data['permittedMaximumMass'])))) {
+                $vehicle->setPermittedMaximumMass((int) $data['permittedMaximumMass']);
+            }
+        }
+        if ($vehicle instanceof Cart) {
+            if (isset($data['colour']) && \is_string($data['colour'])) {
+                $vehicle->setColour($data['colour']);
+            }
+
+            if (isset($data['loadCapacity']) && (\is_int($data['loadCapacity']) || (\is_string($data['loadCapacity']) && ctype_digit($data['loadCapacity'])))) {
+                $vehicle->setLoadCapacity((int) $data['loadCapacity']);
+            }
+            if (isset($data['permittedMaximumMass']) && (\is_int($data['permittedMaximumMass']) || (\is_string($data['permittedMaximumMass']) && ctype_digit($data['permittedMaximumMass'])))) {
+                $vehicle->setPermittedMaximumMass((int) $data['permittedMaximumMass']);
             }
         }
     }
@@ -545,17 +622,25 @@ readonly class VehicleService
             $data['numberOfDoors'] = $vehicle->getNumberOfDoors();
             $data['category'] = $vehicle->getCategory()->value;
             $data['colour'] = $vehicle->getColour();
+            $data['permittedMaximumMass'] = $vehicle->getPermittedMaximumMass();
         }
 
         if ($vehicle instanceof Truck) {
             $data['engineCapacity'] = $vehicle->getEngineCapacity();
             $data['numberOfBeds'] = $vehicle->getNumberOfBeds();
             $data['colour'] = $vehicle->getColour();
+            $data['permittedMaximumMass'] = $vehicle->getPermittedMaximumMass();
         }
 
         if ($vehicle instanceof Trailer) {
             $data['numberOfAxles'] = $vehicle->getNumberOfAxles();
             $data['loadCapacity'] = $vehicle->getLoadCapacity();
+            $data['permittedMaximumMass'] = $vehicle->getPermittedMaximumMass();
+        }
+        if ($vehicle instanceof Cart) {
+            $data['colour'] = $vehicle->getColour();
+            $data['loadCapacity'] = $vehicle->getLoadCapacity();
+            $data['permittedMaximumMass'] = $vehicle->getPermittedMaximumMass();
         }
 
         return $data;

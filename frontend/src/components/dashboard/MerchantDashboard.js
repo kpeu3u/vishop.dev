@@ -239,6 +239,8 @@ const MerchantDashboard = observer(() => {
                                                         type === 'car' ? 'bi-car-front' :
                                                             type === 'truck' ? 'bi-truck' :
                                                                 type === 'motorcycle' ? 'bi-bicycle' :
+                                                                    type === 'cart' ? 'bi-minecart' :
+                                                                        type === 'trailer' ? 'bi-truck-flatbed' :
                                                                     'bi-gear'
                                                     } fs-4 text-primary mb-2`}></i>
                                                     <div className="fw-bold">{count}</div>

@@ -54,6 +54,7 @@ const VehicleDetail = observer(() => {
             case 'motorcycle': return 'bi-bicycle';
             case 'truck': return 'bi-truck';
             case 'trailer': return 'bi-truck-flatbed';
+            case 'cart': return 'bi-minecart';
             default: return 'bi-car-front';
         }
     };
@@ -64,6 +65,7 @@ const VehicleDetail = observer(() => {
             case 'motorcycle': return 'success';
             case 'truck': return 'warning';
             case 'trailer': return 'info';
+            case 'cart': return 'secondary';
             default: return 'secondary';
         }
     };
@@ -83,6 +85,12 @@ const VehicleDetail = observer(() => {
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Engine Capacity:</strong>
                                 <span>{vehicle.engineCapacity}L</span>
+                            </ListGroup.Item>
+                        )}
+                        {vehicle.permittedMaximumMass > 0 && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Permitted Maximum Mass:</strong>
+                                <span>{vehicle.permittedMaximumMass} kg.</span>
                             </ListGroup.Item>
                         )}
                         {vehicle.numberOfDoors && (
@@ -133,6 +141,12 @@ const VehicleDetail = observer(() => {
                                 <span>{vehicle.engineCapacity}L</span>
                             </ListGroup.Item>
                         )}
+                        {vehicle.permittedMaximumMass > 0 && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Permitted Maximum Mass:</strong>
+                                <span>{vehicle.permittedMaximumMass} kg.</span>
+                            </ListGroup.Item>
+                        )}
                         {vehicle.numberOfBeds && (
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Number of Beds:</strong>
@@ -157,9 +171,37 @@ const VehicleDetail = observer(() => {
                                 <span>{vehicle.loadCapacity.toLocaleString()} kg</span>
                             </ListGroup.Item>
                         )}
+                        {vehicle.permittedMaximumMass > 0 && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Permitted Maximum Mass:</strong>
+                                <span>{vehicle.permittedMaximumMass} kg.</span>
+                            </ListGroup.Item>
+                        )}
                     </>
                 );
-
+            case 'cart':
+                return (
+                    <>
+                        {vehicle.colour && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Colour:</strong>
+                                <span>{vehicle.colour}</span>
+                            </ListGroup.Item>
+                        )}
+                        {vehicle.loadCapacity && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Load Capacity:</strong>
+                                <span>{vehicle.loadCapacity.toLocaleString()} kg</span>
+                            </ListGroup.Item>
+                        )}
+                        {vehicle.permittedMaximumMass > 0 && (
+                            <ListGroup.Item className="d-flex justify-content-between">
+                                <strong>Permitted Maximum Mass:</strong>
+                                <span>{vehicle.permittedMaximumMass} kg.</span>
+                            </ListGroup.Item>
+                        )}
+                    </>
+                );
             default:
                 return null;
         }
@@ -279,13 +321,6 @@ const VehicleDetail = observer(() => {
                             <h5 className="text-muted">
                                 <strong>{vehicle.brand}</strong> {vehicle.model}
                             </h5>
-                        </div>
-                    )}
-
-                    {vehicle.description && (
-                        <div className="mb-4">
-                            <h5>Description</h5>
-                            <p className="text-muted">{vehicle.description}</p>
                         </div>
                     )}
 

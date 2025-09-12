@@ -40,7 +40,8 @@ const VehicleFilters = ({ onFilterChange }) => {
         { value: 'car', label: 'Cars' },
         { value: 'motorcycle', label: 'Motorcycles' },
         { value: 'truck', label: 'Trucks' },
-        { value: 'trailer', label: 'Trailers' }
+        { value: 'trailer', label: 'Trailers' },
+        { value: 'cart', label: 'Cart' }
     ];
 
     return (

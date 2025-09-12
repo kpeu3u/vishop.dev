@@ -22,7 +22,8 @@ const VehicleForm = observer(() => {
         category: 'sedan',
         numberOfBeds: '',
         numberOfAxles: '',
-        loadCapacity: ''
+        loadCapacity: '',
+        permittedMaximumMass: ''
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,6 +164,7 @@ const VehicleForm = observer(() => {
             if (formData.numberOfDoors) submitData.numberOfDoors = parseInt(formData.numberOfDoors, 10);
             if (formData.category) submitData.category = formData.category;
             if (formData.colour) submitData.colour = formData.colour;
+            if (formData.permittedMaximumMass) submitData.permittedMaximumMass = parseInt(formData.permittedMaximumMass, 10);
         } else if (formData.type === 'motorcycle') {
             if (formData.engineCapacity) submitData.engineCapacity = parseFloat(formData.engineCapacity);
             if (formData.colour) submitData.colour = formData.colour;
@@ -170,9 +172,15 @@ const VehicleForm = observer(() => {
             if (formData.engineCapacity) submitData.engineCapacity = parseFloat(formData.engineCapacity);
             if (formData.numberOfBeds) submitData.numberOfBeds = parseInt(formData.numberOfBeds, 10);
             if (formData.colour) submitData.colour = formData.colour;
+            if (formData.permittedMaximumMass) submitData.permittedMaximumMass = parseInt(formData.permittedMaximumMass, 10);
         } else if (formData.type === 'trailer') {
             if (formData.numberOfAxles) submitData.numberOfAxles = parseInt(formData.numberOfAxles, 10);
             if (formData.loadCapacity) submitData.loadCapacity = parseInt(formData.loadCapacity, 10);
+            if (formData.permittedMaximumMass) submitData.permittedMaximumMass = parseInt(formData.permittedMaximumMass, 10);
+        } else if(formData.type === 'cart'){
+            if (formData.colour) submitData.colour = formData.colour;
+            if (formData.loadCapacity) submitData.loadCapacity = parseInt(formData.loadCapacity, 10);
+            if (formData.permittedMaximumMass) submitData.permittedMaximumMass = parseInt(formData.permittedMaximumMass, 10);
         }
 
         // Remove empty fields
@@ -208,7 +216,8 @@ const VehicleForm = observer(() => {
         { value: 'car', label: 'Car' },
         { value: 'motorcycle', label: 'Motorcycle' },
         { value: 'truck', label: 'Truck' },
-        { value: 'trailer', label: 'Trailer' }
+        { value: 'trailer', label: 'Trailer' },
+        { value: 'cart', label: 'Cart' }
     ];
 
     const carCategories = [
@@ -245,23 +254,41 @@ const VehicleForm = observer(() => {
                                 {VehicleStore.validationErrors.colour}
                             </Form.Control.Feedback>
                         </Form.Group>
-
-                        <Form.Group className="mb-3">
-                            <Form.Label>Engine Capacity (L) *</Form.Label>
-                            <Form.Control
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                value={formData.engineCapacity}
-                                onChange={(e) => handleChange('engineCapacity', e.target.value)}
-                                required
-                                isInvalid={VehicleStore.validationErrors.engineCapacity}
-                            />
-                            <Form.Control.Feedback type="invalid">
-                                {VehicleStore.validationErrors.engineCapacity}
-                            </Form.Control.Feedback>
-                        </Form.Group>
-
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Engine Capacity (L) *</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        value={formData.engineCapacity}
+                                        onChange={(e) => handleChange('engineCapacity', e.target.value)}
+                                        required
+                                        isInvalid={VehicleStore.validationErrors.engineCapacity}
+                                    />
+                                    <Form.Control.Feedback type="invalid">
+                                        {VehicleStore.validationErrors.engineCapacity}
+                                    </Form.Control.Feedback>
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Permitted Maximum Mass (kg) *</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        min="0"
+                                        value={formData.permittedMaximumMass}
+                                        onChange={(e) => handleChange('permittedMaximumMass', e.target.value)}
+                                        required
+                                        isInvalid={VehicleStore.validationErrors.permittedMaximumMass}
+                                    />
+                                    <Form.Control.Feedback type="invalid">
+                                        {VehicleStore.validationErrors.permittedMaximumMass}
+                                    </Form.Control.Feedback>
+                                </Form.Group>
+                            </Col>
+                        </Row>
                         <Row>
                             <Col md={6}>
                                 <Form.Group className="mb-3">
@@ -357,22 +384,41 @@ const VehicleForm = observer(() => {
                                 {VehicleStore.validationErrors.colour}
                             </Form.Control.Feedback>
                         </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Engine Capacity (L) *</Form.Label>
-                            <Form.Control
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                value={formData.engineCapacity}
-                                onChange={(e) => handleChange('engineCapacity', e.target.value)}
-                                required
-                                isInvalid={VehicleStore.validationErrors.engineCapacity}
-                            />
-                            <Form.Control.Feedback type="invalid">
-                                {VehicleStore.validationErrors.engineCapacity}
-                            </Form.Control.Feedback>
-                        </Form.Group>
-
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Engine Capacity (L) *</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        value={formData.engineCapacity}
+                                        onChange={(e) => handleChange('engineCapacity', e.target.value)}
+                                        required
+                                        isInvalid={VehicleStore.validationErrors.engineCapacity}
+                                    />
+                                    <Form.Control.Feedback type="invalid">
+                                        {VehicleStore.validationErrors.engineCapacity}
+                                    </Form.Control.Feedback>
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Permitted Maximum Mass (kg) *</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        min="0"
+                                        value={formData.permittedMaximumMass}
+                                        onChange={(e) => handleChange('permittedMaximumMass', e.target.value)}
+                                        required
+                                        isInvalid={VehicleStore.validationErrors.permittedMaximumMass}
+                                    />
+                                    <Form.Control.Feedback type="invalid">
+                                        {VehicleStore.validationErrors.permittedMaximumMass}
+                                    </Form.Control.Feedback>
+                                </Form.Group>
+                            </Col>
+                        </Row>
                         <Form.Group className="mb-3">
                             <Form.Label>Number of Beds *</Form.Label>
                             <Form.Control
@@ -407,21 +453,92 @@ const VehicleForm = observer(() => {
                                 {VehicleStore.validationErrors.numberOfAxles}
                             </Form.Control.Feedback>
                         </Form.Group>
-
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Load Capacity (kg) *</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        min="0"
+                                        value={formData.loadCapacity}
+                                        onChange={(e) => handleChange('loadCapacity', e.target.value)}
+                                        required
+                                        isInvalid={VehicleStore.validationErrors.loadCapacity}
+                                    />
+                                    <Form.Control.Feedback type="invalid">
+                                        {VehicleStore.validationErrors.loadCapacity}
+                                    </Form.Control.Feedback>
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Permitted Maximum Mass (kg) *</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        min="0"
+                                        value={formData.permittedMaximumMass}
+                                        onChange={(e) => handleChange('permittedMaximumMass', e.target.value)}
+                                        required
+                                        isInvalid={VehicleStore.validationErrors.permittedMaximumMass}
+                                    />
+                                    <Form.Control.Feedback type="invalid">
+                                        {VehicleStore.validationErrors.permittedMaximumMass}
+                                    </Form.Control.Feedback>
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                    </>
+                );
+            case 'cart':
+                return (
+                    <>
                         <Form.Group className="mb-3">
-                            <Form.Label>Load Capacity (kg) *</Form.Label>
+                            <Form.Label>Colour *</Form.Label>
                             <Form.Control
-                                type="number"
-                                min="0"
-                                value={formData.loadCapacity}
-                                onChange={(e) => handleChange('loadCapacity', e.target.value)}
+                                type="text"
+                                value={formData.colour}
+                                onChange={(e) => handleChange('colour', e.target.value)}
                                 required
-                                isInvalid={VehicleStore.validationErrors.loadCapacity}
+                                isInvalid={VehicleStore.validationErrors.colour}
                             />
                             <Form.Control.Feedback type="invalid">
-                                {VehicleStore.validationErrors.loadCapacity}
+                                {VehicleStore.validationErrors.colour}
                             </Form.Control.Feedback>
                         </Form.Group>
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Load Capacity (kg) *</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        min="0"
+                                        value={formData.loadCapacity}
+                                        onChange={(e) => handleChange('loadCapacity', e.target.value)}
+                                        required
+                                        isInvalid={VehicleStore.validationErrors.loadCapacity}
+                                    />
+                                    <Form.Control.Feedback type="invalid">
+                                        {VehicleStore.validationErrors.loadCapacity}
+                                    </Form.Control.Feedback>
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Permitted Maximum Mass (kg) *</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        min="0"
+                                        value={formData.permittedMaximumMass}
+                                        onChange={(e) => handleChange('permittedMaximumMass', e.target.value)}
+                                        required
+                                        isInvalid={VehicleStore.validationErrors.permittedMaximumMass}
+                                    />
+                                    <Form.Control.Feedback type="invalid">
+                                        {VehicleStore.validationErrors.permittedMaximumMass}
+                                    </Form.Control.Feedback>
+                                </Form.Group>
+                            </Col>
+                        </Row>
                     </>
                 );
 
