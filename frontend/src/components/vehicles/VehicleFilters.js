@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Form, Button, Row, Col } from 'react-bootstrap';
 
-const ProductFilters = ({ onFilterChange }) => {
+const VehicleFilters = ({ onFilterChange }) => {
     const [filters, setFilters] = useState({
         brand: '',
         model: '',
@@ -136,4 +136,4 @@ const ProductFilters = ({ onFilterChange }) => {
     );
 };
 
-export default ProductFilters;
+export default VehicleFilters;

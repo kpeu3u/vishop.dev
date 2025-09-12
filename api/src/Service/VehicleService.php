@@ -4,46 +4,46 @@ namespace App\Service;
 
 use App\Entity\Car;
 use App\Entity\Motorcycle;
-use App\Entity\Product;
-use App\Entity\ProductFollow;
 use App\Entity\Trailer;
 use App\Entity\Truck;
 use App\Entity\User;
+use App\Entity\Vehicle;
+use App\Entity\VehicleFollow;
 use App\Enum\CarCategory;
-use App\Repository\ProductFollowRepository;
-use App\Repository\ProductRepository;
+use App\Repository\VehicleFollowRepository;
+use App\Repository\VehicleRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-readonly class ProductService
+readonly class VehicleService
 {
     public function __construct(
-        private ProductRepository $productRepository,
-        private ProductFollowRepository $productFollowRepository,
+        private VehicleRepository $vehicleRepository,
+        private VehicleFollowRepository $vehicleFollowRepository,
         private EntityManagerInterface $entityManager,
         private ValidatorInterface $validator,
     ) {
     }
 
     /**
-     * @param array<string, mixed> $productData
+     * @param array<string, mixed> $vehicleData
      *
-     * @return array{success: bool, error?: string, errors?: array<string, string>, product?: array<string, mixed>}
+     * @return array{success: bool, error?: string, errors?: array<string, string>, vehicle?: array<string, mixed>}
      */
-    public function createProduct(array $productData, User $merchant): array
+    public function createVehicle(array $vehicleData, User $merchant): array
     {
         if (!$merchant->isMerchant()) {
             return [
                 'success' => false,
-                'error' => 'Only merchants can create products',
+                'error' => 'Only merchants can create vehicles',
             ];
         }
 
         // Validate required type field
-        if (!isset($productData['type']) || !\is_string($productData['type'])) {
+        if (!isset($vehicleData['type']) || !\is_string($vehicleData['type'])) {
             return [
                 'success' => false,
-                'error' => 'Product type is required and must be a string',
+                'error' => 'Vehicle type is required and must be a string',
             ];
         }
 
@@ -56,10 +56,10 @@ readonly class ProductService
                 }
             }
 
-            $product = $this->createProductByType($productData['type'], $productData);
-            $product->setMerchant($merchant);
+            $vehicle = $this->createVehicleByType($vehicleData['type'], $vehicleData);
+            $vehicle->setMerchant($merchant);
 
-            $violations = $this->validator->validate($product);
+            $violations = $this->validator->validate($vehicle);
             if (\count($violations) > 0) {
                 $errors = [];
                 foreach ($violations as $violation) {
@@ -72,39 +72,39 @@ readonly class ProductService
                 ];
             }
 
-            $this->entityManager->persist($product);
+            $this->entityManager->persist($vehicle);
             $this->entityManager->flush();
 
             return [
                 'success' => true,
-                'product' => $this->formatProduct($product),
+                'vehicle' => $this->formatVehicle($vehicle),
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Failed to create product: ' . $e->getMessage(),
+                'error' => 'Failed to create vehicle: ' . $e->getMessage(),
             ];
         }
     }
 
     /**
-     * @param array<string, mixed> $productData
+     * @param array<string, mixed> $vehicleData
      *
-     * @return array{success: bool, error?: string, errors?: array<string, string>, product?: array<string, mixed>}
+     * @return array{success: bool, error?: string, errors?: array<string, string>, vehicle?: array<string, mixed>}
      */
-    public function updateProduct(Product $product, array $productData, User $merchant): array
+    public function updateVehicle(Vehicle $vehicle, array $vehicleData, User $merchant): array
     {
-        if ($product->getMerchant()->getId() !== $merchant->getId()) {
+        if ($vehicle->getMerchant()->getId() !== $merchant->getId()) {
             return [
                 'success' => false,
-                'error' => 'You can only update your own products',
+                'error' => 'You can only update your own vehicles',
             ];
         }
 
         try {
-            $this->updateProductData($product, $productData);
+            $this->updateVehicleData($vehicle, $vehicleData);
 
-            $violations = $this->validator->validate($product);
+            $violations = $this->validator->validate($vehicle);
             if (\count($violations) > 0) {
                 $errors = [];
                 foreach ($violations as $violation) {
@@ -121,12 +121,12 @@ readonly class ProductService
 
             return [
                 'success' => true,
-                'product' => $this->formatProduct($product),
+                'vehicle' => $this->formatVehicle($vehicle),
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Failed to update product: ' . $e->getMessage(),
+                'error' => 'Failed to update vehicle: ' . $e->getMessage(),
             ];
         }
     }
@@ -134,24 +134,24 @@ readonly class ProductService
     /**
      * @return array{success: bool, error?: string}
      */
-    public function deleteProduct(Product $product, User $merchant): array
+    public function deleteVehicle(Vehicle $vehicle, User $merchant): array
     {
-        if ($product->getMerchant()->getId() !== $merchant->getId()) {
+        if ($vehicle->getMerchant()->getId() !== $merchant->getId()) {
             return [
                 'success' => false,
-                'error' => 'You can only delete your own products',
+                'error' => 'You can only delete your own vehicles',
             ];
         }
 
         try {
-            $this->entityManager->remove($product);
+            $this->entityManager->remove($vehicle);
             $this->entityManager->flush();
 
             return ['success' => true];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Failed to delete product: ' . $e->getMessage(),
+                'error' => 'Failed to delete vehicle: ' . $e->getMessage(),
             ];
         }
     }
@@ -159,11 +159,11 @@ readonly class ProductService
     /**
      * @return array<array<string, mixed>>
      */
-    public function getProductsByMerchant(User $merchant): array
+    public function getVehiclesByMerchant(User $merchant): array
     {
-        $products = $this->productRepository->findByMerchant($merchant);
+        $vehicles = $this->vehicleRepository->findByMerchant($merchant);
 
-        return array_map(fn (Product $product) => $this->formatProduct($product), $products);
+        return array_map(fn (Vehicle $vehicle) => $this->formatVehicle($vehicle), $vehicles);
     }
 
     /**
@@ -171,59 +171,59 @@ readonly class ProductService
      *
      * @return array<array<string, mixed>>
      */
-    public function getAllProducts(array $filters = []): array
+    public function getAllVehicles(array $filters = []): array
     {
         if (!empty($filters)) {
-            $products = $this->productRepository->findWithFilters($filters);
+            $vehicles = $this->vehicleRepository->findWithFilters($filters);
         } else {
-            $products = $this->productRepository->findAvailableProducts();
+            $vehicles = $this->vehicleRepository->findAvailableVehicles();
         }
 
-        return array_map(fn (Product $product) => $this->formatProduct($product), $products);
+        return array_map(fn (Vehicle $vehicle) => $this->formatVehicle($vehicle), $vehicles);
     }
 
-    public function getProductById(int $id): ?Product
+    public function getVehicleById(int $id): ?Vehicle
     {
-        return $this->productRepository->find($id);
+        return $this->vehicleRepository->find($id);
     }
 
     /**
      * @return array<array<string, mixed>>
      */
-    public function searchProducts(string $searchTerm): array
+    public function searchVehicles(string $searchTerm): array
     {
-        $products = $this->productRepository->searchProducts($searchTerm);
+        $vehicles = $this->vehicleRepository->searchVehicles($searchTerm);
 
-        return array_map(fn (Product $product) => $this->formatProduct($product), $products);
+        return array_map(fn (Vehicle $vehicle) => $this->formatVehicle($vehicle), $vehicles);
     }
 
     /**
      * @return array{success: bool, error?: string, message?: string}
      */
-    public function followProduct(Product $product, User $buyer): array
+    public function followVehicle(Vehicle $vehicle, User $buyer): array
     {
         if (!$buyer->isBuyer()) {
             return [
                 'success' => false,
-                'error' => 'Only buyers can follow products',
+                'error' => 'Only buyers can follow vehicles',
             ];
         }
 
-        $existingFollow = $this->productFollowRepository->findOneBy([
-            'product' => $product,
+        $existingFollow = $this->vehicleFollowRepository->findOneBy([
+            'vehicle' => $vehicle,
             'user' => $buyer,
         ]);
 
         if ($existingFollow) {
             return [
                 'success' => false,
-                'error' => 'You are already following this product',
+                'error' => 'You are already following this vehicle',
             ];
         }
 
         try {
-            $follow = new ProductFollow();
-            $follow->setProduct($product);
+            $follow = new VehicleFollow();
+            $follow->setVehicle($vehicle);
             $follow->setUser($buyer);
 
             $this->entityManager->persist($follow);
@@ -231,12 +231,12 @@ readonly class ProductService
 
             return [
                 'success' => true,
-                'message' => 'Product followed successfully',
+                'message' => 'Vehicle followed successfully',
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Failed to follow product: ' . $e->getMessage(),
+                'error' => 'Failed to follow vehicle: ' . $e->getMessage(),
             ];
         }
     }
@@ -244,17 +244,17 @@ readonly class ProductService
     /**
      * @return array{success: bool, error?: string, message?: string}
      */
-    public function unfollowProduct(Product $product, User $buyer): array
+    public function unfollowVehicle(Vehicle $vehicle, User $buyer): array
     {
-        $follow = $this->productFollowRepository->findOneBy([
-            'product' => $product,
+        $follow = $this->vehicleFollowRepository->findOneBy([
+            'vehicle' => $vehicle,
             'user' => $buyer,
         ]);
 
         if (!$follow) {
             return [
                 'success' => false,
-                'error' => 'You are not following this product',
+                'error' => 'You are not following this vehicle',
             ];
         }
 
@@ -264,12 +264,12 @@ readonly class ProductService
 
             return [
                 'success' => true,
-                'message' => 'Product unfollowed successfully',
+                'message' => 'Vehicle unfollowed successfully',
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'error' => 'Failed to unfollow product: ' . $e->getMessage(),
+                'error' => 'Failed to unfollow vehicle: ' . $e->getMessage(),
             ];
         }
     }
@@ -277,17 +277,17 @@ readonly class ProductService
     /**
      * @return array<array<string, mixed>>
      */
-    public function getFollowedProducts(User $buyer): array
+    public function getFollowedVehicles(User $buyer): array
     {
-        $products = $this->productRepository->findFollowedByUser($buyer);
+        $vehicles = $this->vehicleRepository->findFollowedByUser($buyer);
 
-        return array_map(fn (Product $product) => $this->formatProduct($product), $products);
+        return array_map(fn (Vehicle $vehicle) => $this->formatVehicle($vehicle), $vehicles);
     }
 
-    public function isProductFollowedByUser(Product $product, User $user): bool
+    public function isVehicleFollowedByUser(Vehicle $vehicle, User $user): bool
     {
-        return null !== $this->productFollowRepository->findOneBy([
-            'product' => $product,
+        return null !== $this->vehicleFollowRepository->findOneBy([
+            'vehicle' => $vehicle,
             'user' => $user,
         ]);
     }
@@ -295,7 +295,7 @@ readonly class ProductService
     /**
      * @param array<string, mixed> $data
      */
-    private function createProductByType(string $type, array $data): Product
+    private function createVehicleByType(string $type, array $data): Vehicle
     {
         return match ($type) {
             'motorcycle' => $this->createMotorcycle($data),
@@ -312,7 +312,7 @@ readonly class ProductService
     private function createMotorcycle(array $data): Motorcycle
     {
         $motorcycle = new Motorcycle();
-        $this->setCommonProductData($motorcycle, $data);
+        $this->setCommonVehicleData($motorcycle, $data);
 
         $engineCapacity = $data['engineCapacity'] ?? '0.00';
         if (is_numeric($engineCapacity)) {
@@ -335,7 +335,7 @@ readonly class ProductService
     private function createCar(array $data): Car
     {
         $car = new Car();
-        $this->setCommonProductData($car, $data);
+        $this->setCommonVehicleData($car, $data);
 
         $engineCapacity = $data['engineCapacity'] ?? '0.00';
         if (is_numeric($engineCapacity)) {
@@ -369,7 +369,7 @@ readonly class ProductService
     private function createTruck(array $data): Truck
     {
         $truck = new Truck();
-        $this->setCommonProductData($truck, $data);
+        $this->setCommonVehicleData($truck, $data);
 
         $engineCapacity = $data['engineCapacity'] ?? '0.00';
         if (is_numeric($engineCapacity)) {
@@ -399,7 +399,7 @@ readonly class ProductService
     private function createTrailer(array $data): Trailer
     {
         $trailer = new Trailer();
-        $this->setCommonProductData($trailer, $data);
+        $this->setCommonVehicleData($trailer, $data);
 
         $numberOfAxles = $data['numberOfAxles'] ?? 1;
         if (\is_int($numberOfAxles) || (\is_string($numberOfAxles) && ctype_digit($numberOfAxles))) {
@@ -421,93 +421,93 @@ readonly class ProductService
     /**
      * @param array<string, mixed> $data
      */
-    private function setCommonProductData(Product $product, array $data): void
+    private function setCommonVehicleData(Vehicle $vehicle, array $data): void
     {
         $brand = $data['brand'] ?? '';
-        $product->setBrand(\is_string($brand) ? $brand : '');
+        $vehicle->setBrand(\is_string($brand) ? $brand : '');
 
         $model = $data['model'] ?? '';
-        $product->setModel(\is_string($model) ? $model : '');
+        $vehicle->setModel(\is_string($model) ? $model : '');
 
         $price = $data['price'] ?? '0.00';
         if (is_numeric($price)) {
-            $product->setPrice((string) $price);
+            $vehicle->setPrice((string) $price);
         } else {
-            $product->setPrice('0.00');
+            $vehicle->setPrice('0.00');
         }
 
         $quantity = $data['quantity'] ?? 0;
         if (\is_int($quantity) || (\is_string($quantity) && ctype_digit($quantity))) {
-            $product->setQuantity((int) $quantity);
+            $vehicle->setQuantity((int) $quantity);
         } else {
-            $product->setQuantity(0);
+            $vehicle->setQuantity(0);
         }
     }
 
     /**
      * @param array<string, mixed> $data
      */
-    private function updateProductData(Product $product, array $data): void
+    private function updateVehicleData(Vehicle $vehicle, array $data): void
     {
         if (isset($data['brand']) && \is_string($data['brand'])) {
-            $product->setBrand($data['brand']);
+            $vehicle->setBrand($data['brand']);
         }
 
         if (isset($data['model']) && \is_string($data['model'])) {
-            $product->setModel($data['model']);
+            $vehicle->setModel($data['model']);
         }
 
         if (isset($data['price']) && is_numeric($data['price'])) {
-            $product->setPrice((string) $data['price']);
+            $vehicle->setPrice((string) $data['price']);
         }
 
         if (isset($data['quantity']) && (\is_int($data['quantity']) || (\is_string($data['quantity']) && ctype_digit($data['quantity'])))) {
-            $product->setQuantity((int) $data['quantity']);
+            $vehicle->setQuantity((int) $data['quantity']);
         }
 
         // Update type-specific fields
-        if ($product instanceof Motorcycle) {
+        if ($vehicle instanceof Motorcycle) {
             if (isset($data['engineCapacity']) && is_numeric($data['engineCapacity'])) {
-                $product->setEngineCapacity((string) $data['engineCapacity']);
+                $vehicle->setEngineCapacity((string) $data['engineCapacity']);
             }
             if (isset($data['colour']) && \is_string($data['colour'])) {
-                $product->setColour($data['colour']);
+                $vehicle->setColour($data['colour']);
             }
         }
 
-        if ($product instanceof Car) {
+        if ($vehicle instanceof Car) {
             if (isset($data['engineCapacity']) && is_numeric($data['engineCapacity'])) {
-                $product->setEngineCapacity((string) $data['engineCapacity']);
+                $vehicle->setEngineCapacity((string) $data['engineCapacity']);
             }
             if (isset($data['numberOfDoors']) && (\is_int($data['numberOfDoors']) || (\is_string($data['numberOfDoors']) && ctype_digit($data['numberOfDoors'])))) {
-                $product->setNumberOfDoors((int) $data['numberOfDoors']);
+                $vehicle->setNumberOfDoors((int) $data['numberOfDoors']);
             }
             if (isset($data['category']) && \is_string($data['category'])) {
-                $product->setCategory(CarCategory::from($data['category']));
+                $vehicle->setCategory(CarCategory::from($data['category']));
             }
             if (isset($data['colour']) && \is_string($data['colour'])) {
-                $product->setColour($data['colour']);
+                $vehicle->setColour($data['colour']);
             }
         }
 
-        if ($product instanceof Truck) {
+        if ($vehicle instanceof Truck) {
             if (isset($data['engineCapacity']) && is_numeric($data['engineCapacity'])) {
-                $product->setEngineCapacity((string) $data['engineCapacity']);
+                $vehicle->setEngineCapacity((string) $data['engineCapacity']);
             }
             if (isset($data['numberOfBeds']) && (\is_int($data['numberOfBeds']) || (\is_string($data['numberOfBeds']) && ctype_digit($data['numberOfBeds'])))) {
-                $product->setNumberOfBeds((int) $data['numberOfBeds']);
+                $vehicle->setNumberOfBeds((int) $data['numberOfBeds']);
             }
             if (isset($data['colour']) && \is_string($data['colour'])) {
-                $product->setColour($data['colour']);
+                $vehicle->setColour($data['colour']);
             }
         }
 
-        if ($product instanceof Trailer) {
+        if ($vehicle instanceof Trailer) {
             if (isset($data['numberOfAxles']) && (\is_int($data['numberOfAxles']) || (\is_string($data['numberOfAxles']) && ctype_digit($data['numberOfAxles'])))) {
-                $product->setNumberOfAxles((int) $data['numberOfAxles']);
+                $vehicle->setNumberOfAxles((int) $data['numberOfAxles']);
             }
             if (isset($data['loadCapacity']) && (\is_int($data['loadCapacity']) || (\is_string($data['loadCapacity']) && ctype_digit($data['loadCapacity'])))) {
-                $product->setLoadCapacity((int) $data['loadCapacity']);
+                $vehicle->setLoadCapacity((int) $data['loadCapacity']);
             }
         }
     }
@@ -515,47 +515,47 @@ readonly class ProductService
     /**
      * @return array<string, mixed>
      */
-    public function formatProduct(Product $product): array
+    public function formatVehicle(Vehicle $vehicle): array
     {
         $data = [
-            'id' => $product->getId(),
-            'type' => $product->getVehicleType()->value,
-            'brand' => $product->getBrand(),
-            'model' => $product->getModel(),
-            'price' => $product->getPrice(),
-            'quantity' => $product->getQuantity(),
+            'id' => $vehicle->getId(),
+            'type' => $vehicle->getVehicleType()->value,
+            'brand' => $vehicle->getBrand(),
+            'model' => $vehicle->getModel(),
+            'price' => $vehicle->getPrice(),
+            'quantity' => $vehicle->getQuantity(),
             'merchant' => [
-                'id' => $product->getMerchant()->getId(),
-                'fullName' => $product->getMerchant()->getFullName(),
-                'email' => $product->getMerchant()->getEmail(),
+                'id' => $vehicle->getMerchant()->getId(),
+                'fullName' => $vehicle->getMerchant()->getFullName(),
+                'email' => $vehicle->getMerchant()->getEmail(),
             ],
-            'createdAt' => $product->getCreatedAt()->format('Y-m-d H:i:s'),
-            'updatedAt' => $product->getUpdatedAt()?->format('Y-m-d H:i:s'),
-            'followersCount' => $product->getFollows()->count(),
+            'createdAt' => $vehicle->getCreatedAt()->format('Y-m-d H:i:s'),
+            'updatedAt' => $vehicle->getUpdatedAt()?->format('Y-m-d H:i:s'),
+            'followersCount' => $vehicle->getFollows()->count(),
         ];
 
         // Add type-specific data
-        if ($product instanceof Motorcycle) {
-            $data['engineCapacity'] = $product->getEngineCapacity();
-            $data['colour'] = $product->getColour();
+        if ($vehicle instanceof Motorcycle) {
+            $data['engineCapacity'] = $vehicle->getEngineCapacity();
+            $data['colour'] = $vehicle->getColour();
         }
 
-        if ($product instanceof Car) {
-            $data['engineCapacity'] = $product->getEngineCapacity();
-            $data['numberOfDoors'] = $product->getNumberOfDoors();
-            $data['category'] = $product->getCategory()->value;
-            $data['colour'] = $product->getColour();
+        if ($vehicle instanceof Car) {
+            $data['engineCapacity'] = $vehicle->getEngineCapacity();
+            $data['numberOfDoors'] = $vehicle->getNumberOfDoors();
+            $data['category'] = $vehicle->getCategory()->value;
+            $data['colour'] = $vehicle->getColour();
         }
 
-        if ($product instanceof Truck) {
-            $data['engineCapacity'] = $product->getEngineCapacity();
-            $data['numberOfBeds'] = $product->getNumberOfBeds();
-            $data['colour'] = $product->getColour();
+        if ($vehicle instanceof Truck) {
+            $data['engineCapacity'] = $vehicle->getEngineCapacity();
+            $data['numberOfBeds'] = $vehicle->getNumberOfBeds();
+            $data['colour'] = $vehicle->getColour();
         }
 
-        if ($product instanceof Trailer) {
-            $data['numberOfAxles'] = $product->getNumberOfAxles();
-            $data['loadCapacity'] = $product->getLoadCapacity();
+        if ($vehicle instanceof Trailer) {
+            $data['numberOfAxles'] = $vehicle->getNumberOfAxles();
+            $data['loadCapacity'] = $vehicle->getLoadCapacity();
         }
 
         return $data;

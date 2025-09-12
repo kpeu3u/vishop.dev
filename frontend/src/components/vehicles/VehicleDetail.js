@@ -2,41 +2,41 @@ import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Card, Badge, Button, Spinner, Alert, ListGroup } from 'react-bootstrap';
-import ProductStore from '../../stores/ProductStore';
+import VehicleStore from '../../stores/VehicleStore';
 import { useAuth } from '../../contexts/AuthContext';
 
-const ProductDetail = observer(() => {
+const VehicleDetail = observer(() => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
 
     useEffect(() => {
         if (id) {
-            ProductStore.loadProduct(parseInt(id));
+            VehicleStore.loadVehicle(parseInt(id));
         }
         return () => {
-            ProductStore.clearCurrentProduct();
-            ProductStore.clearMessages();
+            VehicleStore.clearCurrentVehicle();
+            VehicleStore.clearMessages();
         };
     }, [id]);
 
     const handleFollow = async () => {
-        await ProductStore.followProduct(parseInt(id));
+        await VehicleStore.followVehicle(parseInt(id));
     };
 
     const handleUnfollow = async () => {
-        await ProductStore.unfollowProduct(parseInt(id));
+        await VehicleStore.unfollowVehicle(parseInt(id));
     };
 
     const handleEdit = () => {
-        navigate(`/products/${id}/edit`);
+        navigate(`/vehicles/${id}/edit`);
     };
 
     const handleDelete = async () => {
-        if (window.confirm('Are you sure you want to delete this product?')) {
-            const result = await ProductStore.deleteProduct(parseInt(id));
+        if (window.confirm('Are you sure you want to delete this vehicle?')) {
+            const result = await VehicleStore.deleteVehicle(parseInt(id));
             if (result.success) {
-                navigate('/my-products');
+                navigate('/my-vehicles');
             }
         }
     };
@@ -68,33 +68,33 @@ const ProductDetail = observer(() => {
         }
     };
 
-    const renderVehicleSpecificFields = (product) => {
-        switch (product.type) {
+    const renderVehicleSpecificFields = (vehicle) => {
+        switch (vehicle.type) {
             case 'car':
                 return (
                     <>
-                        {product.colour && (
+                        {vehicle.colour && (
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Colour:</strong>
-                                <span>{product.colour}</span>
+                                <span>{vehicle.colour}</span>
                             </ListGroup.Item>
                         )}
-                        {product.engineCapacity && (
+                        {vehicle.engineCapacity && (
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Engine Capacity:</strong>
-                                <span>{product.engineCapacity}L</span>
+                                <span>{vehicle.engineCapacity}L</span>
                             </ListGroup.Item>
                         )}
-                        {product.numberOfDoors && (
+                        {vehicle.numberOfDoors && (
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Number of Doors:</strong>
-                                <span>{product.numberOfDoors}</span>
+                                <span>{vehicle.numberOfDoors}</span>
                             </ListGroup.Item>
                         )}
-                        {product.category && (
+                        {vehicle.category && (
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Category:</strong>
-                                <span>{product.category.charAt(0).toUpperCase() + product.category.slice(1)}</span>
+                                <span>{vehicle.category.charAt(0).toUpperCase() + vehicle.category.slice(1)}</span>
                             </ListGroup.Item>
                         )}
                     </>
@@ -103,16 +103,16 @@ const ProductDetail = observer(() => {
             case 'motorcycle':
                 return (
                     <>
-                        {product.colour && (
+                        {vehicle.colour && (
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Colour:</strong>
-                                <span>{product.colour}</span>
+                                <span>{vehicle.colour}</span>
                             </ListGroup.Item>
                         )}
-                        {product.engineCapacity && (
+                        {vehicle.engineCapacity && (
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Engine Capacity:</strong>
-                                <span>{product.engineCapacity}L</span>
+                                <span>{vehicle.engineCapacity}L</span>
                             </ListGroup.Item>
                         )}
                     </>
@@ -121,22 +121,22 @@ const ProductDetail = observer(() => {
             case 'truck':
                 return (
                     <>
-                        {product.colour && (
+                        {vehicle.colour && (
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Colour:</strong>
-                                <span>{product.colour}</span>
+                                <span>{vehicle.colour}</span>
                             </ListGroup.Item>
                         )}
-                        {product.engineCapacity && (
+                        {vehicle.engineCapacity && (
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Engine Capacity:</strong>
-                                <span>{product.engineCapacity}L</span>
+                                <span>{vehicle.engineCapacity}L</span>
                             </ListGroup.Item>
                         )}
-                        {product.numberOfBeds && (
+                        {vehicle.numberOfBeds && (
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Number of Beds:</strong>
-                                <span>{product.numberOfBeds}</span>
+                                <span>{vehicle.numberOfBeds}</span>
                             </ListGroup.Item>
                         )}
                     </>
@@ -145,16 +145,16 @@ const ProductDetail = observer(() => {
             case 'trailer':
                 return (
                     <>
-                        {product.numberOfAxles && (
+                        {vehicle.numberOfAxles && (
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Number of Axles:</strong>
-                                <span>{product.numberOfAxles}</span>
+                                <span>{vehicle.numberOfAxles}</span>
                             </ListGroup.Item>
                         )}
-                        {product.loadCapacity && (
+                        {vehicle.loadCapacity && (
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Load Capacity:</strong>
-                                <span>{product.loadCapacity.toLocaleString()} kg</span>
+                                <span>{vehicle.loadCapacity.toLocaleString()} kg</span>
                             </ListGroup.Item>
                         )}
                     </>
@@ -165,127 +165,127 @@ const ProductDetail = observer(() => {
         }
     };
 
-    if (ProductStore.isLoading) {
+    if (VehicleStore.isLoading) {
         return (
             <Container className="my-5 text-center">
                 <Spinner animation="border" role="status">
                     <span className="visually-hidden">Loading...</span>
                 </Spinner>
-                <p className="mt-2">Loading product...</p>
+                <p className="mt-2">Loading vehicle...</p>
             </Container>
         );
     }
 
-    if (ProductStore.error) {
+    if (VehicleStore.error) {
         return (
             <Container className="my-5">
                 <Alert variant="danger">
-                    {ProductStore.error}
+                    {VehicleStore.error}
                 </Alert>
-                <Button as={Link} to="/products" variant="primary">
+                <Button as={Link} to="/vehicles" variant="primary">
                     <i className="bi bi-arrow-left me-1"></i>
-                    Back to Products
+                    Back to Vehicles
                 </Button>
             </Container>
         );
     }
 
-    const product = ProductStore.currentProduct;
+    const vehicle = VehicleStore.currentVehicle;
 
-    if (!product) {
+    if (!vehicle) {
         return (
             <Container className="my-5 text-center">
-                <h4>Product not found</h4>
-                <Button as={Link} to="/products" variant="primary">
+                <h4>Vehicle not found</h4>
+                <Button as={Link} to="/vehicles" variant="primary">
                     <i className="bi bi-arrow-left me-1"></i>
-                    Back to Products
+                    Back to Vehicles
                 </Button>
             </Container>
         );
     }
 
-    const isOwner = user && product.merchant && user.id === product.merchant.id;
+    const isOwner = user && vehicle.merchant && user.id === vehicle.merchant.id;
     const canFollow = user && user.roles.includes('ROLE_BUYER') && !isOwner;
 
     return (
         <Container className="my-4">
             {/* Back Button */}
             <div className="mb-3">
-                <Button as={Link} to="/products" variant="outline-secondary" size="sm">
+                <Button as={Link} to="/vehicles" variant="outline-secondary" size="sm">
                     <i className="bi bi-arrow-left me-1"></i>
-                    Back to Products
+                    Back to Vehicles
                 </Button>
             </div>
 
             {/* Messages */}
-            {ProductStore.error && (
-                <Alert variant="danger" dismissible onClose={() => ProductStore.clearMessages()}>
-                    {ProductStore.error}
+            {VehicleStore.error && (
+                <Alert variant="danger" dismissible onClose={() => VehicleStore.clearMessages()}>
+                    {VehicleStore.error}
                 </Alert>
             )}
 
-            {ProductStore.successMessage && (
-                <Alert variant="success" dismissible onClose={() => ProductStore.clearMessages()}>
-                    {ProductStore.successMessage}
+            {VehicleStore.successMessage && (
+                <Alert variant="success" dismissible onClose={() => VehicleStore.clearMessages()}>
+                    {VehicleStore.successMessage}
                 </Alert>
             )}
 
             <Row>
-                {/* Product Image */}
+                {/* Vehicle Image */}
                 <Col md={6}>
                     <Card>
-                        {product.imageUrl ? (
+                        {vehicle.imageUrl ? (
                             <Card.Img
                                 variant="top"
-                                src={product.imageUrl}
+                                src={vehicle.imageUrl}
                                 style={{ height: '400px', objectFit: 'cover' }}
-                                alt={product.title}
+                                alt={vehicle.title}
                             />
                         ) : (
                             <div
                                 className="d-flex align-items-center justify-content-center bg-light"
                                 style={{ height: '400px' }}
                             >
-                                <i className={`bi ${getTypeIcon(product.type)} text-muted`} style={{ fontSize: '4rem' }}></i>
+                                <i className={`bi ${getTypeIcon(vehicle.type)} text-muted`} style={{ fontSize: '4rem' }}></i>
                             </div>
                         )}
                     </Card>
                 </Col>
 
-                {/* Product Details */}
+                {/* Vehicle Details */}
                 <Col md={6}>
                     <div className="d-flex justify-content-between align-items-start mb-3">
-                        <Badge bg={getTypeVariant(product.type)} className="mb-2">
-                            <i className={`bi ${getTypeIcon(product.type)} me-1`}></i>
-                            {product.type?.charAt(0).toUpperCase() + product.type?.slice(1)}
+                        <Badge bg={getTypeVariant(vehicle.type)} className="mb-2">
+                            <i className={`bi ${getTypeIcon(vehicle.type)} me-1`}></i>
+                            {vehicle.type?.charAt(0).toUpperCase() + vehicle.type?.slice(1)}
                         </Badge>
 
-                        {product.quantity === 0 && (
+                        {vehicle.quantity === 0 && (
                             <Badge bg="danger">Out of Stock</Badge>
                         )}
-                        {product.quantity > 0 && product.quantity <= 5 && (
+                        {vehicle.quantity > 0 && vehicle.quantity <= 5 && (
                             <Badge bg="warning">Low Stock</Badge>
                         )}
                     </div>
 
-                    <h1 className="mb-3">{product.title}</h1>
+                    <h1 className="mb-3">{vehicle.title}</h1>
 
                     <div className="mb-4">
-                        <h2 className="text-primary mb-0">{formatPrice(product.price)}</h2>
+                        <h2 className="text-primary mb-0">{formatPrice(vehicle.price)}</h2>
                     </div>
 
-                    {product.brand && product.model && (
+                    {vehicle.brand && vehicle.model && (
                         <div className="mb-3">
                             <h5 className="text-muted">
-                                <strong>{product.brand}</strong> {product.model}
+                                <strong>{vehicle.brand}</strong> {vehicle.model}
                             </h5>
                         </div>
                     )}
 
-                    {product.description && (
+                    {vehicle.description && (
                         <div className="mb-4">
                             <h5>Description</h5>
-                            <p className="text-muted">{product.description}</p>
+                            <p className="text-muted">{vehicle.description}</p>
                         </div>
                     )}
 
@@ -295,31 +295,31 @@ const ProductDetail = observer(() => {
                             <h5 className="mb-0">Specifications</h5>
                         </Card.Header>
                         <ListGroup variant="flush">
-                            {product.brand && (
+                            {vehicle.brand && (
                                 <ListGroup.Item className="d-flex justify-content-between">
                                     <strong>Brand:</strong>
-                                    <span>{product.brand}</span>
+                                    <span>{vehicle.brand}</span>
                                 </ListGroup.Item>
                             )}
-                            {product.model && (
+                            {vehicle.model && (
                                 <ListGroup.Item className="d-flex justify-content-between">
                                     <strong>Model:</strong>
-                                    <span>{product.model}</span>
+                                    <span>{vehicle.model}</span>
                                 </ListGroup.Item>
                             )}
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Type:</strong>
-                                <span>{product.type?.charAt(0).toUpperCase() + product.type?.slice(1)}</span>
+                                <span>{vehicle.type?.charAt(0).toUpperCase() + vehicle.type?.slice(1)}</span>
                             </ListGroup.Item>
-                            {renderVehicleSpecificFields(product)}
+                            {renderVehicleSpecificFields(vehicle)}
                             <ListGroup.Item className="d-flex justify-content-between">
                                 <strong>Quantity:</strong>
-                                <span>{product.quantity}</span>
+                                <span>{vehicle.quantity}</span>
                             </ListGroup.Item>
-                            {product.followersCount !== undefined && (
+                            {vehicle.followersCount !== undefined && (
                                 <ListGroup.Item className="d-flex justify-content-between">
                                     <strong>Followers:</strong>
-                                    <span>{product.followersCount}</span>
+                                    <span>{vehicle.followersCount}</span>
                                 </ListGroup.Item>
                             )}
                         </ListGroup>
@@ -331,7 +331,7 @@ const ProductDetail = observer(() => {
                             <h5>Seller Information</h5>
                             <p className="mb-0">
                                 <i className="bi bi-person me-2"></i>
-                                <strong>{product.merchant?.fullName || 'Merchant'}</strong>
+                                <strong>{vehicle.merchant?.fullName || 'Merchant'}</strong>
                             </p>
                         </Card.Body>
                     </Card>
@@ -346,12 +346,12 @@ const ProductDetail = observer(() => {
                                     className="flex-fill"
                                 >
                                     <i className="bi bi-pencil me-1"></i>
-                                    Edit Product
+                                    Edit Vehicle
                                 </Button>
                                 <Button
                                     variant="outline-danger"
                                     onClick={handleDelete}
-                                    disabled={ProductStore.isLoading}
+                                    disabled={VehicleStore.isLoading}
                                 >
                                     <i className="bi bi-trash me-1"></i>
                                     Delete
@@ -361,23 +361,23 @@ const ProductDetail = observer(() => {
 
                         {canFollow && (
                             <>
-                                {product.isFollowed ? (
+                                {vehicle.isFollowed ? (
                                     <Button
                                         variant="outline-danger"
                                         onClick={handleUnfollow}
-                                        disabled={ProductStore.isLoading}
+                                        disabled={VehicleStore.isLoading}
                                     >
                                         <i className="bi bi-heart-fill me-1"></i>
-                                        Unfollow Product
+                                        Unfollow Vehicle
                                     </Button>
                                 ) : (
                                     <Button
                                         variant="primary"
                                         onClick={handleFollow}
-                                        disabled={ProductStore.isLoading}
+                                        disabled={VehicleStore.isLoading}
                                     >
                                         <i className="bi bi-heart me-1"></i>
-                                        Follow Product
+                                        Follow Vehicle
                                     </Button>
                                 )}
                             </>
@@ -389,4 +389,4 @@ const ProductDetail = observer(() => {
     );
 });
 
-export default ProductDetail;
+export default VehicleDetail;

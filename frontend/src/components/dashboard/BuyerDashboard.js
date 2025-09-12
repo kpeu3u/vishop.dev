@@ -2,19 +2,19 @@ import React from 'react';
 import { Row, Col, Card, Button, ListGroup, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
-import productStore from '../../stores/ProductStore';
+import vehicleStore from '../../stores/VehicleStore';
 
 const BuyerDashboard = observer(() => {
-    const { followedProducts, products } = productStore;
+    const { followedVehicles, vehicles } = vehicleStore;
 
     // Calculate stats
-    const totalFollowed = followedProducts.length;
-    const recentProducts = products.slice(0, 5);
-    const availableProducts = products.filter(p => p.quantity > 0).length;
+    const totalFollowed = followedVehicles.length;
+    const recentVehicles = vehicles.slice(0, 5);
+    const availableVehicles = vehicles.filter(p => p.quantity > 0).length;
 
-    // Group products by type for quick overview
-    const productsByType = products.reduce((acc, product) => {
-        const type = product.type || 'other';
+    // Group vehicles by type for quick overview
+    const vehiclesByType = vehicles.reduce((acc, vehicle) => {
+        const type = vehicle.type || 'other';
         acc[type] = (acc[type] || 0) + 1;
         return acc;
     }, {});
@@ -30,7 +30,7 @@ const BuyerDashboard = observer(() => {
                                 <i className="bi bi-heart fs-1"></i>
                             </div>
                             <h3 className="mb-1">{totalFollowed}</h3>
-                            <p className="text-muted mb-0">Followed Products</p>
+                            <p className="text-muted mb-0">Followed Vehicles</p>
                         </Card.Body>
                     </Card>
                 </Col>
@@ -40,7 +40,7 @@ const BuyerDashboard = observer(() => {
                             <div className="text-success mb-2">
                                 <i className="bi bi-car-front fs-1"></i>
                             </div>
-                            <h3 className="mb-1">{availableProducts}</h3>
+                            <h3 className="mb-1">{availableVehicles}</h3>
                             <p className="text-muted mb-0">Available Vehicles</p>
                         </Card.Body>
                     </Card>
@@ -51,7 +51,7 @@ const BuyerDashboard = observer(() => {
                             <div className="text-info mb-2">
                                 <i className="bi bi-collection fs-1"></i>
                             </div>
-                            <h3 className="mb-1">{products.length}</h3>
+                            <h3 className="mb-1">{vehicles.length}</h3>
                             <p className="text-muted mb-0">Total Listings</p>
                         </Card.Body>
                     </Card>
@@ -62,7 +62,7 @@ const BuyerDashboard = observer(() => {
                             <div className="text-warning mb-2">
                                 <i className="bi bi-search fs-1"></i>
                             </div>
-                            <h3 className="mb-1">{Object.keys(productsByType).length}</h3>
+                            <h3 className="mb-1">{Object.keys(vehiclesByType).length}</h3>
                             <p className="text-muted mb-0">Vehicle Types</p>
                         </Card.Body>
                     </Card>
@@ -70,14 +70,14 @@ const BuyerDashboard = observer(() => {
             </Row>
 
             <Row>
-                {/* Followed Products */}
+                {/* Followed Vehicles */}
                 <Col lg={6} className="mb-4">
                     <Card className="h-100 border-0 shadow-sm">
                         <Card.Header className="bg-white border-0 py-3">
                             <div className="d-flex justify-content-between align-items-center">
                                 <h5 className="mb-0">
                                     <i className="bi bi-heart-fill text-danger me-2"></i>
-                                    Followed Products
+                                    Followed Vehicles
                                 </h5>
                                 <Link to="/followed" className="btn btn-sm btn-outline-primary">
                                     View All
@@ -85,20 +85,20 @@ const BuyerDashboard = observer(() => {
                             </div>
                         </Card.Header>
                         <Card.Body className="p-0">
-                            {followedProducts.length > 0 ? (
+                            {followedVehicles.length > 0 ? (
                                 <ListGroup variant="flush">
-                                    {followedProducts.slice(0, 5).map(product => (
-                                        <ListGroup.Item key={product.id} className="d-flex justify-content-between align-items-center">
+                                    {followedVehicles.slice(0, 5).map(vehicle => (
+                                        <ListGroup.Item key={vehicle.id} className="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <h6 className="mb-1">{product.title}</h6>
+                                                <h6 className="mb-1">{vehicle.title}</h6>
                                                 <small className="text-muted">
                                                     <i className="bi bi-tag me-1"></i>
-                                                    ${product.price?.toLocaleString()}
+                                                    ${vehicle.price?.toLocaleString()}
                                                 </small>
                                             </div>
                                             <div className="text-end">
-                                                <Badge bg={product.quantity > 0 ? 'success' : 'secondary'}>
-                                                    {product.quantity > 0 ? 'Available' : 'Sold'}
+                                                <Badge bg={vehicle.quantity > 0 ? 'success' : 'secondary'}>
+                                                    {vehicle.quantity > 0 ? 'Available' : 'Sold'}
                                                 </Badge>
                                             </div>
                                         </ListGroup.Item>
@@ -107,9 +107,9 @@ const BuyerDashboard = observer(() => {
                             ) : (
                                 <div className="text-center py-4">
                                     <i className="bi bi-heart text-muted" style={{ fontSize: '3rem' }}></i>
-                                    <p className="text-muted mt-2 mb-0">No followed products yet</p>
-                                    <Link to="/products" className="btn btn-sm btn-primary mt-2">
-                                        Browse Products
+                                    <p className="text-muted mt-2 mb-0">No followed vehicles yet</p>
+                                    <Link to="/vehicles" className="btn btn-sm btn-primary mt-2">
+                                        Browse Vehicles
                                     </Link>
                                 </div>
                             )}
@@ -117,7 +117,7 @@ const BuyerDashboard = observer(() => {
                     </Card>
                 </Col>
 
-                {/* Recent Products */}
+                {/* Recent Vehicles */}
                 <Col lg={6} className="mb-4">
                     <Card className="h-100 border-0 shadow-sm">
                         <Card.Header className="bg-white border-0 py-3">
@@ -126,31 +126,31 @@ const BuyerDashboard = observer(() => {
                                     <i className="bi bi-clock text-primary me-2"></i>
                                     Recent Listings
                                 </h5>
-                                <Link to="/products" className="btn btn-sm btn-outline-primary">
+                                <Link to="/vehicles" className="btn btn-sm btn-outline-primary">
                                     View All
                                 </Link>
                             </div>
                         </Card.Header>
                         <Card.Body className="p-0">
-                            {recentProducts.length > 0 ? (
+                            {recentVehicles.length > 0 ? (
                                 <ListGroup variant="flush">
-                                    {recentProducts.map(product => (
-                                        <ListGroup.Item key={product.id} className="d-flex justify-content-between align-items-center">
+                                    {recentVehicles.map(vehicle => (
+                                        <ListGroup.Item key={vehicle.id} className="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <h6 className="mb-1">{product.title}</h6>
+                                                <h6 className="mb-1">{vehicle.title}</h6>
                                                 <small className="text-muted">
                                                     <i className="bi bi-person me-1"></i>
-                                                    {product.merchant?.fullName || product.merchant?.email || 'Unknown Seller'}
+                                                    {vehicle.merchant?.fullName || vehicle.merchant?.email || 'Unknown Seller'}
                                                 </small>
                                             </div>
                                             <div className="text-end">
                                                 <div className="text-primary fw-bold">
-                                                    ${product.price?.toLocaleString()}
+                                                    ${vehicle.price?.toLocaleString()}
                                                 </div>
-                                                <Badge bg={product.type === 'car' ? 'primary' :
-                                                    product.type === 'truck' ? 'success' :
-                                                        product.type === 'motorcycle' ? 'warning' : 'info'}>
-                                                    {product.type || 'vehicle'}
+                                                <Badge bg={vehicle.type === 'car' ? 'primary' :
+                                                    vehicle.type === 'truck' ? 'success' :
+                                                        vehicle.type === 'motorcycle' ? 'warning' : 'info'}>
+                                                    {vehicle.type || 'vehicle'}
                                                 </Badge>
                                             </div>
                                         </ListGroup.Item>
@@ -159,7 +159,7 @@ const BuyerDashboard = observer(() => {
                             ) : (
                                 <div className="text-center py-4">
                                     <i className="bi bi-collection text-muted" style={{ fontSize: '3rem' }}></i>
-                                    <p className="text-muted mt-2 mb-0">No products available</p>
+                                    <p className="text-muted mt-2 mb-0">No vehicles available</p>
                                 </div>
                             )}
                         </Card.Body>
@@ -168,7 +168,7 @@ const BuyerDashboard = observer(() => {
             </Row>
 
             {/* Vehicle Types Overview */}
-            {Object.keys(productsByType).length > 0 && (
+            {Object.keys(vehiclesByType).length > 0 && (
                 <Row>
                     <Col>
                         <Card className="border-0 shadow-sm">
@@ -180,7 +180,7 @@ const BuyerDashboard = observer(() => {
                             </Card.Header>
                             <Card.Body>
                                 <Row>
-                                    {Object.entries(productsByType).map(([type, count]) => (
+                                    {Object.entries(vehiclesByType).map(([type, count]) => (
                                         <Col md={3} key={type} className="mb-3">
                                             <div className="text-center p-3 bg-light rounded">
                                                 <div className="mb-2">
@@ -216,7 +216,7 @@ const BuyerDashboard = observer(() => {
                         <Card.Body>
                             <Row>
                                 <Col md={3} className="mb-2">
-                                    <Link to="/products" className="btn btn-primary w-100">
+                                    <Link to="/vehicles" className="btn btn-primary w-100">
                                         <i className="bi bi-search me-2"></i>
                                         Browse Vehicles
                                     </Link>
@@ -234,7 +234,7 @@ const BuyerDashboard = observer(() => {
                                     </Link>
                                 </Col>
                                 <Col md={3} className="mb-2">
-                                    <Button variant="outline-info" className="w-100" onClick={() => productStore.loadProducts()}>
+                                    <Button variant="outline-info" className="w-100" onClick={() => vehicleStore.loadVehicles()}>
                                         <i className="bi bi-arrow-clockwise me-2"></i>
                                         Refresh
                                     </Button>

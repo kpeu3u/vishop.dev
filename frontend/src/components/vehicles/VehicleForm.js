@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Container, Row, Col, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
-import ProductStore from '../../stores/ProductStore';
+import VehicleStore from '../../stores/VehicleStore';
 import AuthStore from '../../stores/AuthStore'; // Add this import
-const ProductForm = observer(() => {
+const VehicleForm = observer(() => {
     const { id } = useParams();
     const navigate = useNavigate();
     const isEdit = Boolean(id);
@@ -29,36 +29,36 @@ const ProductForm = observer(() => {
 
     useEffect(() => {
         if (isEdit && id) {
-            ProductStore.loadProduct(parseInt(id));
+            VehicleStore.loadVehicle(parseInt(id));
         }
 
         return () => {
-            ProductStore.clearMessages();
+            VehicleStore.clearMessages();
             if (isEdit) {
-                ProductStore.clearCurrentProduct();
+                VehicleStore.clearCurrentVehicle();
             }
         };
     }, [isEdit, id]);
 
     useEffect(() => {
-        if (isEdit && ProductStore.currentProduct) {
-            const product = ProductStore.currentProduct;
+        if (isEdit && VehicleStore.currentVehicle) {
+            const vehicle = VehicleStore.currentVehicle;
             setFormData({
-                brand: product.brand || '',
-                model: product.model || '',
-                price: product.price?.toString() || '',
-                quantity: product.quantity?.toString() || '',
-                colour: product.colour.toString() || '',
-                type: product.type || 'car',
-                engineCapacity: product.engineCapacity?.toString() || '',
-                numberOfDoors: product.numberOfDoors?.toString() || '4',
-                category: product.category || 'sedan',
-                numberOfBeds: product.numberOfBeds?.toString() || '',
-                numberOfAxles: product.numberOfAxles?.toString() || '',
-                loadCapacity: product.loadCapacity?.toString() || ''
+                brand: vehicle.brand || '',
+                model: vehicle.model || '',
+                price: vehicle.price?.toString() || '',
+                quantity: vehicle.quantity?.toString() || '',
+                colour: vehicle.colour.toString() || '',
+                type: vehicle.type || 'car',
+                engineCapacity: vehicle.engineCapacity?.toString() || '',
+                numberOfDoors: vehicle.numberOfDoors?.toString() || '4',
+                category: vehicle.category || 'sedan',
+                numberOfBeds: vehicle.numberOfBeds?.toString() || '',
+                numberOfAxles: vehicle.numberOfAxles?.toString() || '',
+                loadCapacity: vehicle.loadCapacity?.toString() || ''
             });
         }
-    }, [isEdit, ProductStore.currentProduct]);
+    }, [isEdit, VehicleStore.currentVehicle]);
 
     useEffect(() => {
         // Check authentication when component mounts
@@ -68,7 +68,7 @@ const ProductForm = observer(() => {
 
             if (!token || !user) {
                 navigate('/login', {
-                    state: { message: 'Please login to create products.' }
+                    state: { message: 'Please login to create vehicles.' }
                 });
                 return;
             }
@@ -81,8 +81,8 @@ const ProductForm = observer(() => {
                     const roles = payload.roles || [];
                     
                     if (!roles.includes('ROLE_MERCHANT')) {
-                        navigate('/products', {
-                            state: { message: 'You must be a merchant to create products.' }
+                        navigate('/vehicles', {
+                            state: { message: 'You must be a merchant to create vehicles.' }
                         });
                     } else {
                         // The user has merchant role in token but not in AuthStore
@@ -121,8 +121,8 @@ const ProductForm = observer(() => {
 
                 if (isExpired) {
                     console.error('JWT token has expired!');
-                    ProductStore.clearMessages();
-                    ProductStore.error = 'Your session has expired. Please login again.';
+                    VehicleStore.clearMessages();
+                    VehicleStore.error = 'Your session has expired. Please login again.';
                     setIsSubmitting(false);
                     navigate('/login');
                     return;
@@ -132,8 +132,8 @@ const ProductForm = observer(() => {
                 const roles = payload.roles || [];
                 if (!roles.includes('ROLE_MERCHANT')) {
                     console.error('User does not have ROLE_MERCHANT!');
-                    ProductStore.clearMessages();
-                    ProductStore.error = 'You must be a merchant to create products.';
+                    VehicleStore.clearMessages();
+                    VehicleStore.error = 'You must be a merchant to create vehicles.';
                     setIsSubmitting(false);
                     return;
                 }
@@ -142,8 +142,8 @@ const ProductForm = observer(() => {
             }
         } else {
             console.error('No JWT token found! User needs to login.');
-            ProductStore.clearMessages();
-            ProductStore.error = 'Authentication required. Please login again.';
+            VehicleStore.clearMessages();
+            VehicleStore.error = 'Authentication required. Please login again.';
             setIsSubmitting(false);
             navigate('/login');
             return;
@@ -185,16 +185,16 @@ const ProductForm = observer(() => {
         try {
             let result;
             if (isEdit) {
-                result = await ProductStore.updateProduct(parseInt(id), submitData);
+                result = await VehicleStore.updateVehicle(parseInt(id), submitData);
             } else {
-                result = await ProductStore.createProduct(submitData);
+                result = await VehicleStore.createVehicle(submitData);
             }
 
             if (result.success) {
                 if (isEdit) {
-                    navigate(`/products/${id}`);
+                    navigate(`/vehicles/${id}`);
                 } else {
-                    navigate('/my-products');
+                    navigate('/my-vehicles');
                 }
             }
         } catch (error) {
@@ -239,10 +239,10 @@ const ProductForm = observer(() => {
                                 value={formData.colour}
                                 onChange={(e) => handleChange('colour', e.target.value)}
                                 required
-                                isInvalid={ProductStore.validationErrors.colour}
+                                isInvalid={VehicleStore.validationErrors.colour}
                             />
                             <Form.Control.Feedback type="invalid">
-                                {ProductStore.validationErrors.colour}
+                                {VehicleStore.validationErrors.colour}
                             </Form.Control.Feedback>
                         </Form.Group>
 
@@ -255,10 +255,10 @@ const ProductForm = observer(() => {
                                 value={formData.engineCapacity}
                                 onChange={(e) => handleChange('engineCapacity', e.target.value)}
                                 required
-                                isInvalid={ProductStore.validationErrors.engineCapacity}
+                                isInvalid={VehicleStore.validationErrors.engineCapacity}
                             />
                             <Form.Control.Feedback type="invalid">
-                                {ProductStore.validationErrors.engineCapacity}
+                                {VehicleStore.validationErrors.engineCapacity}
                             </Form.Control.Feedback>
                         </Form.Group>
 
@@ -270,7 +270,7 @@ const ProductForm = observer(() => {
                                         value={formData.numberOfDoors}
                                         onChange={(e) => handleChange('numberOfDoors', e.target.value)}
                                         required
-                                        isInvalid={ProductStore.validationErrors.numberOfDoors}
+                                        isInvalid={VehicleStore.validationErrors.numberOfDoors}
                                     >
                                         {doorOptions.map(option => (
                                             <option key={option.value} value={option.value}>
@@ -279,7 +279,7 @@ const ProductForm = observer(() => {
                                         ))}
                                     </Form.Select>
                                     <Form.Control.Feedback type="invalid">
-                                        {ProductStore.validationErrors.numberOfDoors}
+                                        {VehicleStore.validationErrors.numberOfDoors}
                                     </Form.Control.Feedback>
                                 </Form.Group>
                             </Col>
@@ -290,7 +290,7 @@ const ProductForm = observer(() => {
                                         value={formData.category}
                                         onChange={(e) => handleChange('category', e.target.value)}
                                         required
-                                        isInvalid={ProductStore.validationErrors.category}
+                                        isInvalid={VehicleStore.validationErrors.category}
                                     >
                                         {carCategories.map(category => (
                                             <option key={category.value} value={category.value}>
@@ -299,7 +299,7 @@ const ProductForm = observer(() => {
                                         ))}
                                     </Form.Select>
                                     <Form.Control.Feedback type="invalid">
-                                        {ProductStore.validationErrors.category}
+                                        {VehicleStore.validationErrors.category}
                                     </Form.Control.Feedback>
                                 </Form.Group>
                             </Col>
@@ -317,10 +317,10 @@ const ProductForm = observer(() => {
                                 value={formData.colour}
                                 onChange={(e) => handleChange('colour', e.target.value)}
                                 required
-                                isInvalid={ProductStore.validationErrors.colour}
+                                isInvalid={VehicleStore.validationErrors.colour}
                             />
                             <Form.Control.Feedback type="invalid">
-                                {ProductStore.validationErrors.colour}
+                                {VehicleStore.validationErrors.colour}
                             </Form.Control.Feedback>
                         </Form.Group>
                         <Form.Group className="mb-3">
@@ -332,10 +332,10 @@ const ProductForm = observer(() => {
                                 value={formData.engineCapacity}
                                 onChange={(e) => handleChange('engineCapacity', e.target.value)}
                                 required
-                                isInvalid={ProductStore.validationErrors.engineCapacity}
+                                isInvalid={VehicleStore.validationErrors.engineCapacity}
                             />
                             <Form.Control.Feedback type="invalid">
-                                {ProductStore.validationErrors.engineCapacity}
+                                {VehicleStore.validationErrors.engineCapacity}
                             </Form.Control.Feedback>
                         </Form.Group>
                     </>
@@ -351,10 +351,10 @@ const ProductForm = observer(() => {
                                 value={formData.colour}
                                 onChange={(e) => handleChange('colour', e.target.value)}
                                 required
-                                isInvalid={ProductStore.validationErrors.colour}
+                                isInvalid={VehicleStore.validationErrors.colour}
                             />
                             <Form.Control.Feedback type="invalid">
-                                {ProductStore.validationErrors.colour}
+                                {VehicleStore.validationErrors.colour}
                             </Form.Control.Feedback>
                         </Form.Group>
                         <Form.Group className="mb-3">
@@ -366,10 +366,10 @@ const ProductForm = observer(() => {
                                 value={formData.engineCapacity}
                                 onChange={(e) => handleChange('engineCapacity', e.target.value)}
                                 required
-                                isInvalid={ProductStore.validationErrors.engineCapacity}
+                                isInvalid={VehicleStore.validationErrors.engineCapacity}
                             />
                             <Form.Control.Feedback type="invalid">
-                                {ProductStore.validationErrors.engineCapacity}
+                                {VehicleStore.validationErrors.engineCapacity}
                             </Form.Control.Feedback>
                         </Form.Group>
 
@@ -381,10 +381,10 @@ const ProductForm = observer(() => {
                                 value={formData.numberOfBeds}
                                 onChange={(e) => handleChange('numberOfBeds', e.target.value)}
                                 required
-                                isInvalid={ProductStore.validationErrors.numberOfBeds}
+                                isInvalid={VehicleStore.validationErrors.numberOfBeds}
                             />
                             <Form.Control.Feedback type="invalid">
-                                {ProductStore.validationErrors.numberOfBeds}
+                                {VehicleStore.validationErrors.numberOfBeds}
                             </Form.Control.Feedback>
                         </Form.Group>
                     </>
@@ -401,10 +401,10 @@ const ProductForm = observer(() => {
                                 value={formData.numberOfAxles}
                                 onChange={(e) => handleChange('numberOfAxles', e.target.value)}
                                 required
-                                isInvalid={ProductStore.validationErrors.numberOfAxles}
+                                isInvalid={VehicleStore.validationErrors.numberOfAxles}
                             />
                             <Form.Control.Feedback type="invalid">
-                                {ProductStore.validationErrors.numberOfAxles}
+                                {VehicleStore.validationErrors.numberOfAxles}
                             </Form.Control.Feedback>
                         </Form.Group>
 
@@ -416,10 +416,10 @@ const ProductForm = observer(() => {
                                 value={formData.loadCapacity}
                                 onChange={(e) => handleChange('loadCapacity', e.target.value)}
                                 required
-                                isInvalid={ProductStore.validationErrors.loadCapacity}
+                                isInvalid={VehicleStore.validationErrors.loadCapacity}
                             />
                             <Form.Control.Feedback type="invalid">
-                                {ProductStore.validationErrors.loadCapacity}
+                                {VehicleStore.validationErrors.loadCapacity}
                             </Form.Control.Feedback>
                         </Form.Group>
                     </>
@@ -430,13 +430,13 @@ const ProductForm = observer(() => {
         }
     };
 
-    if (isEdit && ProductStore.isLoading && !ProductStore.currentProduct) {
+    if (isEdit && VehicleStore.isLoading && !VehicleStore.currentVehicle) {
         return (
             <Container className="my-5 text-center">
                 <Spinner animation="border" role="status">
                     <span className="visually-hidden">Loading...</span>
                 </Spinner>
-                <p className="mt-2">Loading product...</p>
+                <p className="mt-2">Loading vehicle...</p>
             </Container>
         );
     }
@@ -448,7 +448,7 @@ const ProductForm = observer(() => {
                     <Card>
                         <Card.Header>
                             <h3 className="mb-0">
-                                {isEdit ? 'Edit Product' : 'Add New Product'}
+                                {isEdit ? 'Edit Vehicle' : 'Add New Vehicle'}
                             </h3>
                         </Card.Header>
                         <Card.Body>
@@ -456,7 +456,7 @@ const ProductForm = observer(() => {
                             <div className="mb-3">
                                 <Button
                                     as={Link}
-                                    to={isEdit ? `/products/${id}` : '/my-products'}
+                                    to={isEdit ? `/vehicles/${id}` : '/my-vehicles'}
                                     variant="outline-secondary"
                                     size="sm"
                                 >
@@ -466,17 +466,17 @@ const ProductForm = observer(() => {
                             </div>
 
                             {/* Messages */}
-                            {ProductStore.error && (
-                                <Alert variant="danger" dismissible onClose={() => ProductStore.clearMessages()}>
-                                    {ProductStore.error}
+                            {VehicleStore.error && (
+                                <Alert variant="danger" dismissible onClose={() => VehicleStore.clearMessages()}>
+                                    {VehicleStore.error}
                                 </Alert>
                             )}
 
-                            {Object.keys(ProductStore.validationErrors).length > 0 && (
+                            {Object.keys(VehicleStore.validationErrors).length > 0 && (
                                 <Alert variant="danger">
                                     <p className="mb-2"><strong>Please fix the following errors:</strong></p>
                                     <ul className="mb-0">
-                                        {Object.entries(ProductStore.validationErrors).map(([field, messages]) => (
+                                        {Object.entries(VehicleStore.validationErrors).map(([field, messages]) => (
                                             <li key={field}>
                                                 <strong>{field}:</strong> {Array.isArray(messages) ? messages.join(', ') : messages}
                                             </li>
@@ -493,7 +493,7 @@ const ProductForm = observer(() => {
                                         value={formData.type}
                                         onChange={(e) => handleChange('type', e.target.value)}
                                         required
-                                        isInvalid={ProductStore.validationErrors.type}
+                                        isInvalid={VehicleStore.validationErrors.type}
                                     >
                                         {vehicleTypes.map(type => (
                                             <option key={type.value} value={type.value}>
@@ -502,7 +502,7 @@ const ProductForm = observer(() => {
                                         ))}
                                     </Form.Select>
                                     <Form.Control.Feedback type="invalid">
-                                        {ProductStore.validationErrors.type}
+                                        {VehicleStore.validationErrors.type}
                                     </Form.Control.Feedback>
                                 </Form.Group>
 
@@ -514,10 +514,10 @@ const ProductForm = observer(() => {
                                         value={formData.brand}
                                         onChange={(e) => handleChange('brand', e.target.value)}
                                         required
-                                        isInvalid={ProductStore.validationErrors.brand}
+                                        isInvalid={VehicleStore.validationErrors.brand}
                                     />
                                     <Form.Control.Feedback type="invalid">
-                                        {ProductStore.validationErrors.brand}
+                                        {VehicleStore.validationErrors.brand}
                                     </Form.Control.Feedback>
                                 </Form.Group>
 
@@ -529,10 +529,10 @@ const ProductForm = observer(() => {
                                         value={formData.model}
                                         onChange={(e) => handleChange('model', e.target.value)}
                                         required
-                                        isInvalid={ProductStore.validationErrors.model}
+                                        isInvalid={VehicleStore.validationErrors.model}
                                     />
                                     <Form.Control.Feedback type="invalid">
-                                        {ProductStore.validationErrors.model}
+                                        {VehicleStore.validationErrors.model}
                                     </Form.Control.Feedback>
                                 </Form.Group>
 
@@ -548,10 +548,10 @@ const ProductForm = observer(() => {
                                                 value={formData.price}
                                                 onChange={(e) => handleChange('price', e.target.value)}
                                                 required
-                                                isInvalid={ProductStore.validationErrors.price}
+                                                isInvalid={VehicleStore.validationErrors.price}
                                             />
                                             <Form.Control.Feedback type="invalid">
-                                                {ProductStore.validationErrors.price}
+                                                {VehicleStore.validationErrors.price}
                                             </Form.Control.Feedback>
                                         </Form.Group>
                                     </Col>
@@ -564,10 +564,10 @@ const ProductForm = observer(() => {
                                                 value={formData.quantity}
                                                 onChange={(e) => handleChange('quantity', e.target.value)}
                                                 required
-                                                isInvalid={ProductStore.validationErrors.quantity}
+                                                isInvalid={VehicleStore.validationErrors.quantity}
                                             />
                                             <Form.Control.Feedback type="invalid">
-                                                {ProductStore.validationErrors.quantity}
+                                                {VehicleStore.validationErrors.quantity}
                                             </Form.Control.Feedback>
                                         </Form.Group>
                                     </Col>
@@ -580,7 +580,7 @@ const ProductForm = observer(() => {
                                 <div className="d-grid gap-2 d-md-flex justify-content-md-end">
                                     <Button
                                         as={Link}
-                                        to={isEdit ? `/products/${id}` : '/my-products'}
+                                        to={isEdit ? `/vehicles/${id}` : '/my-vehicles'}
                                         variant="outline-secondary"
                                     >
                                         Cancel
@@ -599,7 +599,7 @@ const ProductForm = observer(() => {
                                                 className="me-1"
                                             />
                                         )}
-                                        {isEdit ? 'Update Product' : 'Create Product'}
+                                        {isEdit ? 'Update Vehicle' : 'Create Vehicle'}
                                     </Button>
                                 </div>
                             </Form>
@@ -611,4 +611,4 @@ const ProductForm = observer(() => {
     );
 });
 
-export default ProductForm;
+export default VehicleForm;

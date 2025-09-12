@@ -11,12 +11,12 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import ProfilePage from './components/profile/ProfilePage';
 import Dashboard from './components/dashboard/Dashboard';
 
-// Product Components
-import ProductList from './components/products/ProductList';
-import ProductDetail from './components/products/ProductDetail';
-import ProductForm from './components/products/ProductForm';
-import MyProducts from './components/products/MyProducts';
-import FollowedProducts from './components/products/FollowedProducts';
+// Vehicle Components
+import VehicleList from './components/vehicles/VehicleList';
+import VehicleDetail from './components/vehicles/VehicleDetail';
+import VehicleForm from './components/vehicles/VehicleForm';
+import MyVehicles from './components/vehicles/MyVehicles';
+import FollowedVehicles from './components/vehicles/FollowedVehicles';
 
 import './App.css';
 
@@ -32,7 +32,7 @@ const Home = () => (
                         Your premier vehicle shopping destination
                     </p>
                     <div className="d-flex gap-3 justify-content-center">
-                        <Link to="/products" className="btn btn-primary btn-lg px-4 text-decoration-none">
+                        <Link to="/vehicles" className="btn btn-primary btn-lg px-4 text-decoration-none">
                             Browse Vehicles
                         </Link>
 
@@ -109,9 +109,9 @@ function App() {
                             <Route path="/reset-password" element={<ResetPasswordForm />} />
                             <Route path="/unauthorized" element={<Unauthorized />} />
 
-                            {/* Public Product Routes */}
-                            <Route path="/products" element={<ProductList />} />
-                            <Route path="/products/:id" element={<ProductDetail />} />
+                            {/* Public Vehicle Routes */}
+                            <Route path="/vehicles" element={<VehicleList />} />
+                            <Route path="/vehicles/:id" element={<VehicleDetail />} />
 
                             {/* Protected routes */}
                             <Route
@@ -134,28 +134,28 @@ function App() {
 
                             {/* Merchant-only routes */}
                             <Route
-                                path="/products/new"
+                                path="/vehicles/new"
                                 element={
                                     <ProtectedRoute requiredRole="ROLE_MERCHANT">
-                                        <ProductForm />
+                                        <VehicleForm />
                                     </ProtectedRoute>
                                 }
                             />
                             
                             <Route
-                                path="/products/:id/edit"
+                                path="/vehicles/:id/edit"
                                 element={
                                     <ProtectedRoute requiredRole="ROLE_MERCHANT">
-                                        <ProductForm />
+                                        <VehicleForm />
                                     </ProtectedRoute>
                                 }
                             />
                             
                             <Route
-                                path="/my-products"
+                                path="/my-vehicles"
                                 element={
                                     <ProtectedRoute requiredRole="ROLE_MERCHANT">
-                                        <MyProducts />
+                                        <MyVehicles />
                                     </ProtectedRoute>
                                 }
                             />
@@ -165,14 +165,14 @@ function App() {
                                 path="/followed"
                                 element={
                                     <ProtectedRoute requiredRole="ROLE_BUYER">
-                                        <FollowedProducts />
+                                        <FollowedVehicles />
                                     </ProtectedRoute>
                                 }
                             />
 
                             {/* Legacy route redirects */}
-                            <Route path="/add-vehicle" element={<ProtectedRoute requiredRole="ROLE_MERCHANT"><ProductForm /></ProtectedRoute>} />
-                            <Route path="/favorites" element={<ProtectedRoute requiredRole="ROLE_BUYER"><FollowedProducts /></ProtectedRoute>} />
+                            <Route path="/add-vehicle" element={<ProtectedRoute requiredRole="ROLE_MERCHANT"><VehicleForm /></ProtectedRoute>} />
+                            <Route path="/favorites" element={<ProtectedRoute requiredRole="ROLE_BUYER"><FollowedVehicles /></ProtectedRoute>} />
                         </Routes>
                     </main>
 

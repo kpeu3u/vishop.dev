@@ -46,17 +46,17 @@ security:
         - { path: ^/api/auth, roles: PUBLIC_ACCESS }
 
         # Buyer-specific endpoints (most specific patterns first)
-        - { path: ^/api/products/\d+/follow, roles: 'ROLE_BUYER', methods: [POST] }
-        - { path: ^/api/products/\d+/unfollow, roles: 'ROLE_BUYER', methods: [DELETE] }
-        - { path: ^/api/products/followed, roles: 'ROLE_BUYER' }
+        - { path: ^/api/vehicles/\d+/follow, roles: 'ROLE_BUYER', methods: [POST] }
+        - { path: ^/api/vehicles/\d+/unfollow, roles: 'ROLE_BUYER', methods: [DELETE] }
+        - { path: ^/api/vehicles/followed, roles: 'ROLE_BUYER' }
 
         # Merchant-specific endpoints
-        - { path: ^/api/products/my-products, roles: 'ROLE_MERCHANT' }
-        - { path: ^/api/products/\d+$, roles: 'ROLE_MERCHANT', methods: [PUT, PATCH, DELETE] }
-        - { path: ^/api/products$, roles: 'ROLE_MERCHANT', methods: [POST] }
+        - { path: ^/api/vehicles/my-vehicles, roles: 'ROLE_MERCHANT' }
+        - { path: ^/api/vehicles/\d+$, roles: 'ROLE_MERCHANT', methods: [PUT, PATCH, DELETE] }
+        - { path: ^/api/vehicles$, roles: 'ROLE_MERCHANT', methods: [POST] }
 
         # General product endpoints (less specific patterns last)
-        - { path: ^/api/products, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/vehicles, roles: PUBLIC_ACCESS, methods: [GET] }
 
         # All other API endpoints require authentication
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

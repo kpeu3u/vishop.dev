@@ -227,9 +227,9 @@ export const profileAPI = {
     },
 };
 
-// Product API methods
-export const productAPI = {
-    getProducts: async (filters = {}) => {
+// Vehicle API methods
+export const vehicleAPI = {
+    getVehicles: async (filters = {}) => {
         try {
             const params = new URLSearchParams();
             Object.keys(filters).forEach(key => {
@@ -238,7 +238,7 @@ export const productAPI = {
                 }
             });
 
-            const response = await api.get(`/api/products${params.toString() ? `?${params.toString()}` : ''}`);
+            const response = await api.get(`/api/vehicles${params.toString() ? `?${params.toString()}` : ''}`);
             return response.data;
         } catch (error) {
             throw {
@@ -252,9 +252,9 @@ export const productAPI = {
         }
     },
 
-    searchProducts: async (searchTerm) => {
+    searchVehicles: async (searchTerm) => {
         try {
-            const response = await api.get(`/api/products/search?q=${encodeURIComponent(searchTerm)}`);
+            const response = await api.get(`/api/vehicles/search?q=${encodeURIComponent(searchTerm)}`);
             return response.data;
         } catch (error) {
             throw {
@@ -268,9 +268,9 @@ export const productAPI = {
         }
     },
 
-    getProduct: async (id) => {
+    getVehicle: async (id) => {
         try {
-            const response = await api.get(`/api/products/${id}`);
+            const response = await api.get(`/api/vehicles/${id}`);
             return response.data;
         } catch (error) {
             throw {
@@ -284,9 +284,9 @@ export const productAPI = {
         }
     },
 
-    createProduct: async (productData) => {
+    createVehicle: async (vehicleData) => {
         try {
-            const response = await api.post('/api/products', productData);
+            const response = await api.post('/api/vehicles', vehicleData);
             return response.data;
         } catch (error) {
             throw {
@@ -301,9 +301,9 @@ export const productAPI = {
         }
     },
 
-    updateProduct: async (id, productData) => {
+    updateVehicle: async (id, vehicleData) => {
         try {
-            const response = await api.put(`/api/products/${id}`, productData);
+            const response = await api.put(`/api/vehicles/${id}`, vehicleData);
             return response.data;
         } catch (error) {
             throw {
@@ -318,9 +318,9 @@ export const productAPI = {
         }
     },
 
-    deleteProduct: async (id) => {
+    deleteVehicle: async (id) => {
         try {
-            const response = await api.delete(`/api/products/${id}`);
+            const response = await api.delete(`/api/vehicles/${id}`);
             return response.data;
         } catch (error) {
             throw {
@@ -334,9 +334,9 @@ export const productAPI = {
         }
     },
 
-    getMyProducts: async () => {
+    getMyVehicles: async () => {
         try {
-            const response = await api.get('/api/products/my-products');
+            const response = await api.get('/api/vehicles/my-vehicles');
             return response.data;
         } catch (error) {
             throw {
@@ -350,9 +350,9 @@ export const productAPI = {
         }
     },
 
-    followProduct: async (id) => {
+    followVehicle: async (id) => {
         try {
-            const response = await api.post(`/api/products/${id}/follow`);
+            const response = await api.post(`/api/vehicles/${id}/follow`);
             return response.data;
         } catch (error) {
             throw {
@@ -366,9 +366,9 @@ export const productAPI = {
         }
     },
 
-    unfollowProduct: async (id) => {
+    unfollowVehicle: async (id) => {
         try {
-            const response = await api.delete(`/api/products/${id}/unfollow`);
+            const response = await api.delete(`/api/vehicles/${id}/unfollow`);
             return response.data;
         } catch (error) {
             throw {
@@ -382,9 +382,9 @@ export const productAPI = {
         }
     },
 
-    getFollowedProducts: async () => {
+    getFollowedVehicles: async () => {
         try {
-            const response = await api.get('/api/products/followed');
+            const response = await api.get('/api/vehicles/followed');
             return response.data;
         } catch (error) {
             throw {
