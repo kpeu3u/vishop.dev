@@ -36,6 +36,7 @@ security:
             entry_point: 'jwt'
             refresh_jwt:
                 check_path: /api/token/refresh
+                provider: database_users
 
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/

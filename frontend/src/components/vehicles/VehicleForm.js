@@ -56,7 +56,8 @@ const VehicleForm = observer(() => {
                 category: vehicle.category || 'sedan',
                 numberOfBeds: vehicle.numberOfBeds?.toString() || '',
                 numberOfAxles: vehicle.numberOfAxles?.toString() || '',
-                loadCapacity: vehicle.loadCapacity?.toString() || ''
+                loadCapacity: vehicle.loadCapacity?.toString() || '',
+                permittedMaximumMass: vehicle.permittedMaximumMass?.toString() || ''
             });
         }
     }, [isEdit, VehicleStore.currentVehicle]);
@@ -278,7 +279,7 @@ const VehicleForm = observer(() => {
                                     <Form.Control
                                         type="number"
                                         min="0"
-                                        value={formData.permittedMaximumMass}
+                                        value={formData.permittedMaximumMass || ''}
                                         onChange={(e) => handleChange('permittedMaximumMass', e.target.value)}
                                         required
                                         isInvalid={VehicleStore.validationErrors.permittedMaximumMass}
@@ -408,7 +409,7 @@ const VehicleForm = observer(() => {
                                     <Form.Control
                                         type="number"
                                         min="0"
-                                        value={formData.permittedMaximumMass}
+                                        value={formData.permittedMaximumMass || ''}
                                         onChange={(e) => handleChange('permittedMaximumMass', e.target.value)}
                                         required
                                         isInvalid={VehicleStore.validationErrors.permittedMaximumMass}
@@ -476,7 +477,7 @@ const VehicleForm = observer(() => {
                                     <Form.Control
                                         type="number"
                                         min="0"
-                                        value={formData.permittedMaximumMass}
+                                        value={formData.permittedMaximumMass || ''}
                                         onChange={(e) => handleChange('permittedMaximumMass', e.target.value)}
                                         required
                                         isInvalid={VehicleStore.validationErrors.permittedMaximumMass}
@@ -528,7 +529,7 @@ const VehicleForm = observer(() => {
                                     <Form.Control
                                         type="number"
                                         min="0"
-                                        value={formData.permittedMaximumMass}
+                                        value={formData.permittedMaximumMass || ''}
                                         onChange={(e) => handleChange('permittedMaximumMass', e.target.value)}
                                         required
                                         isInvalid={VehicleStore.validationErrors.permittedMaximumMass}

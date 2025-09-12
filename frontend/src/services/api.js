@@ -35,10 +35,6 @@ api.interceptors.response.use(
                 if (refreshToken) {
                     const refreshResponse = await api.post('/api/token/refresh', {
                         refresh_token: refreshToken
-                    }, {
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
                     });
 
                     if (refreshResponse.data.token) {
@@ -108,10 +104,6 @@ export const authAPI = {
 
             const refreshResponse = await api.post('/api/token/refresh', {
                 refresh_token: refreshToken
-            }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
             });
             // Store new tokens
             if (refreshResponse.data.token) {
