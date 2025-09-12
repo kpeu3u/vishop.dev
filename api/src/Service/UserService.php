@@ -5,16 +5,17 @@ namespace App\Service;
 use App\Entity\User;
 use App\Utils\Validator;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-readonly class UserService
+class UserService extends AbstractService
 {
     public function __construct(
-        private EntityManagerInterface $entityManager,
-        private UserPasswordHasherInterface $passwordHasher,
-        private ValidatorInterface $validator,
-        private Validator $customValidator,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly ValidatorInterface $validator,
+        private readonly Validator $customValidator,
     ) {
     }
 
@@ -23,25 +24,21 @@ readonly class UserService
      */
     public function changePassword(User $user, string $currentPassword, string $newPassword, string $confirmPassword): array
     {
-        // Validate current password
         if (!$this->passwordHasher->isPasswordValid($user, $currentPassword)) {
             return ['success' => false, 'error' => 'Current password is incorrect'];
         }
 
-        // Validate new password
         try {
             $this->customValidator->validatePassword($newPassword);
         } catch (\InvalidArgumentException $e) {
             return ['success' => false, 'error' => $e->getMessage()];
         }
 
-        // Confirm password match
         if ($newPassword !== $confirmPassword) {
             return ['success' => false, 'error' => 'Passwords do not match'];
         }
 
         try {
-            // Hash and set new password
             $hashedPassword = $this->passwordHasher->hashPassword($user, $newPassword);
             $user->setPassword($hashedPassword);
 
@@ -64,7 +61,6 @@ readonly class UserService
         $originalFullName = $user->getFullName();
 
         try {
-            // Update full name if provided
             if (!empty($data['fullName'])) {
                 $fullName = $data['fullName'];
                 if (!\is_string($fullName)) {
@@ -74,7 +70,6 @@ readonly class UserService
                 $user->setFullName($validatedFullName);
             }
 
-            // Update email if provided
             if (!empty($data['email'])) {
                 $email = $data['email'];
                 if (!\is_string($email)) {
@@ -82,7 +77,6 @@ readonly class UserService
                 }
                 $validatedEmail = $this->customValidator->validateEmail($email);
 
-                // Check if email is already taken by another user
                 $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $validatedEmail]);
                 if ($existingUser && $existingUser->getId() !== $user->getId()) {
                     return ['success' => false, 'error' => 'Email address is already in use'];
@@ -91,10 +85,8 @@ readonly class UserService
                 $user->setEmail($validatedEmail);
             }
 
-            // Validate the user entity
             $errors = $this->validator->validate($user);
             if (\count($errors) > 0) {
-                // Revert changes
                 $user->setEmail($originalEmail);
                 $user->setFullName($originalFullName);
 
@@ -111,27 +103,84 @@ readonly class UserService
             return [
                 'success' => true,
                 'message' => 'Profile updated successfully',
-                'user' => [
-                    'id' => $user->getId(),
-                    'email' => $user->getEmail(),
-                    'fullName' => $user->getFullName(),
-                    'roles' => $user->getRoles(),
-                    'isVerified' => $user->isVerified(),
-                    'isActive' => $user->isActive(),
-                ],
+                'user' => $this->formatUserProfile($user),
             ];
         } catch (\InvalidArgumentException $e) {
-            // Revert changes
             $user->setEmail($originalEmail);
             $user->setFullName($originalFullName);
 
             return ['success' => false, 'error' => $e->getMessage()];
         } catch (\Exception $e) {
-            // Revert changes
             $user->setEmail($originalEmail);
             $user->setFullName($originalFullName);
 
             return ['success' => false, 'error' => 'Failed to update profile. Please try again.'];
         }
+    }
+
+    /**
+     * Handle password change from request.
+     *
+     * @return array{success: bool, error?: string, message?: string}
+     */
+    public function handlePasswordChange(Request $request, User $user): array
+    {
+        $jsonResult = $this->extractJsonData($request);
+        if (!$jsonResult['success']) {
+            return $jsonResult;
+        }
+
+        $data = $jsonResult['data'] ?? [];
+
+        $requiredFields = ['currentPassword', 'newPassword', 'confirmPassword'];
+        $fieldValidation = $this->validateRequiredFields($data, $requiredFields);
+        if (!$fieldValidation['success']) {
+            return $fieldValidation;
+        }
+
+        $currentPassword = $this->castToString($data['currentPassword']);
+        $newPassword = $this->castToString($data['newPassword']);
+        $confirmPassword = $this->castToString($data['confirmPassword']);
+
+        return $this->changePassword(
+            $user,
+            $currentPassword,
+            $newPassword,
+            $confirmPassword
+        );
+    }
+
+    /**
+     * Handle profile update from request.
+     *
+     * @return array{success: bool, error?: string, message?: string, user?: array<string, mixed>}
+     */
+    public function handleProfileUpdate(Request $request, User $user): array
+    {
+        $jsonResult = $this->extractJsonData($request);
+        if (!$jsonResult['success']) {
+            return $jsonResult;
+        }
+
+        $data = $jsonResult['data'] ?? [];
+
+        return $this->updateProfile($user, $data);
+    }
+
+    /**
+     * Format user data for API response.
+     *
+     * @return array<string, mixed>
+     */
+    public function formatUserProfile(User $user): array
+    {
+        return [
+            'id' => $user->getId(),
+            'email' => $user->getEmail(),
+            'fullName' => $user->getFullName(),
+            'roles' => $user->getRoles(),
+            'isVerified' => $user->isVerified(),
+            'isActive' => $user->isActive(),
+        ];
     }
 }

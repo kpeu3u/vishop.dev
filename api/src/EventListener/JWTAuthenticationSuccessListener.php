@@ -13,9 +13,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 readonly class JWTAuthenticationSuccessListener implements EventSubscriberInterface
 {
     public function __construct(
-        private RefreshTokenManagerInterface   $refreshTokenManager,
+        private RefreshTokenManagerInterface $refreshTokenManager,
         private RefreshTokenGeneratorInterface $refreshTokenGenerator,
-        private EntityManagerInterface         $entityManager,
+        private EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -35,7 +35,6 @@ readonly class JWTAuthenticationSuccessListener implements EventSubscriberInterf
             return;
         }
 
-        // Add user data to the response
         $data['user'] = [
             'id' => $user->getId(),
             'email' => $user->getEmail(),
@@ -43,10 +42,8 @@ readonly class JWTAuthenticationSuccessListener implements EventSubscriberInterf
             'roles' => $user->getRoles(),
         ];
 
-        // Generate and add refresh token to the response
         try {
-            // Use the new API - TTL in seconds (30 days = 30 * 24 * 60 * 60 seconds)
-            $ttlInSeconds = 30 * 24 * 60 * 60; // 30 days
+            $ttlInSeconds = 30 * 24 * 60 * 60;
 
             $refreshToken = $this->refreshTokenGenerator->createForUserWithTtl(
                 $user,
@@ -58,7 +55,6 @@ readonly class JWTAuthenticationSuccessListener implements EventSubscriberInterf
 
             $data['refresh_token'] = $refreshToken->getRefreshToken();
         } catch (\Exception $e) {
-            // Log the error but don't fail the login process
             error_log('Failed to generate refresh token: ' . $e->getMessage());
         }
 

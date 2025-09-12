@@ -15,7 +15,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class UserController extends AbstractController
 {
     public function __construct(
-        private readonly UserService $profileService,
+        private readonly UserService $userService,
     ) {
     }
 
@@ -25,14 +25,9 @@ class UserController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        return $this->json([
-            'id' => $user->getId(),
-            'email' => $user->getEmail(),
-            'fullName' => $user->getFullName(),
-            'roles' => $user->getRoles(),
-            'isVerified' => $user->isVerified(),
-            'isActive' => $user->isActive(),
-        ]);
+        $userProfile = $this->userService->formatUserProfile($user);
+
+        return $this->json($userProfile);
     }
 
     #[Route('/change-password', name: 'api_change_password', methods: ['POST'])]
@@ -41,46 +36,9 @@ class UserController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        $data = json_decode($request->getContent(), true);
+        $result = $this->userService->handlePasswordChange($request, $user);
 
-        if (!\is_array($data)) {
-            return $this->json([
-                'success' => false,
-                'error' => 'Invalid JSON data provided',
-            ], 400);
-        }
-
-        // Validate required fields
-        $requiredFields = ['currentPassword', 'newPassword', 'confirmPassword'];
-        foreach ($requiredFields as $field) {
-            if (!isset($data[$field]) || !\is_string($data[$field]) || empty(trim($data[$field]))) {
-                return $this->json([
-                    'success' => false,
-                    'error' => ucfirst($field) . ' is required',
-                ], 400);
-            }
-        }
-
-        // Extract validated string values
-        $currentPassword = $data['currentPassword'];
-        $newPassword = $data['newPassword'];
-        $confirmPassword = $data['confirmPassword'];
-
-        // PHPStan now knows these are strings due to the validation above
-        \assert(\is_string($currentPassword));
-        \assert(\is_string($newPassword));
-        \assert(\is_string($confirmPassword));
-
-        $result = $this->profileService->changePassword(
-            $user,
-            $currentPassword,
-            $newPassword,
-            $confirmPassword
-        );
-
-        $statusCode = $result['success'] ? 200 : 400;
-
-        return $this->json($result, $statusCode);
+        return $this->json($result, $result['success'] ? 200 : 400);
     }
 
     #[Route('/update', name: 'api_update_profile', methods: ['PUT'])]
@@ -89,20 +47,8 @@ class UserController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        $data = json_decode($request->getContent(), true);
+        $result = $this->userService->handleProfileUpdate($request, $user);
 
-        if (!\is_array($data)) {
-            return $this->json([
-                'success' => false,
-                'error' => 'Invalid JSON data provided',
-            ], 400);
-        }
-
-        /** @var array<string, mixed> $data */
-        $result = $this->profileService->updateProfile($user, $data);
-
-        $statusCode = $result['success'] ? 200 : 400;
-
-        return $this->json($result, $statusCode);
+        return $this->json($result, $result['success'] ? 200 : 400);
     }
 }

@@ -2,169 +2,395 @@
 
 namespace App\Service;
 
-use App\Entity\Car;
-use App\Entity\Cart;
-use App\Entity\Motorcycle;
-use App\Entity\Trailer;
-use App\Entity\Truck;
 use App\Entity\User;
 use App\Entity\Vehicle;
 use App\Entity\VehicleFollow;
-use App\Enum\CarCategory;
 use App\Repository\VehicleFollowRepository;
 use App\Repository\VehicleRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-readonly class VehicleService
+class VehicleService extends AbstractService
 {
     public function __construct(
-        private VehicleRepository $vehicleRepository,
-        private VehicleFollowRepository $vehicleFollowRepository,
-        private EntityManagerInterface $entityManager,
-        private ValidatorInterface $validator,
+        private readonly VehicleRepository $vehicleRepository,
+        private readonly VehicleFollowRepository $vehicleFollowRepository,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ValidatorInterface $validator,
+        private readonly VehicleFactory $vehicleFactory,
     ) {
     }
 
     /**
-     * @param array<string, mixed> $vehicleData
+     * Handle vehicle listing with filters from request.
      *
-     * @return array{success: bool, error?: string, errors?: array<string, string>, vehicle?: array<string, mixed>}
+     * @return array{success: bool, vehicles?: array<array<string, mixed>>, error?: string}
      */
-    public function createVehicle(array $vehicleData, User $merchant): array
+    public function handleVehicleList(Request $request): array
     {
-        if (!$merchant->isMerchant()) {
-            return [
-                'success' => false,
-                'error' => 'Only merchants can create vehicles',
-            ];
-        }
-
-        // Validate required type field
-        if (!isset($vehicleData['type']) || !\is_string($vehicleData['type'])) {
-            return [
-                'success' => false,
-                'error' => 'Vehicle type is required and must be a string',
-            ];
-        }
-
         try {
-            // Ensure the merchant is properly managed by the EntityManager
-            if (!$this->entityManager->contains($merchant)) {
-                $merchant = $this->entityManager->find(User::class, $merchant->getId());
-                if (!$merchant) {
-                    throw new \Exception('Merchant user not found in database');
-                }
-            }
-
-            $vehicle = $this->createVehicleByType($vehicleData['type'], $vehicleData);
-            $vehicle->setMerchant($merchant);
-
-            $violations = $this->validator->validate($vehicle);
-            if (\count($violations) > 0) {
-                $errors = [];
-                foreach ($violations as $violation) {
-                    $errors[$violation->getPropertyPath()] = $violation->getMessage();
-                }
-
-                return [
-                    'success' => false,
-                    'errors' => $errors,
-                ];
-            }
-
-            $this->entityManager->persist($vehicle);
-            $this->entityManager->flush();
+            $allowedFilters = ['brand', 'model', 'minPrice', 'maxPrice', 'inStock'];
+            $filters = $this->extractFiltersFromRequest($request, $allowedFilters);
+            $vehicles = $this->getAllVehicles($filters);
 
             return [
                 'success' => true,
-                'vehicle' => $this->formatVehicle($vehicle),
+                'vehicles' => $vehicles,
             ];
         } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => 'Failed to create vehicle: ' . $e->getMessage(),
-            ];
+            return $this->createErrorResponse('Failed to retrieve vehicles: ' . $e->getMessage());
         }
     }
 
     /**
+     * Handle vehicle search from request.
+     *
+     * @return array{success: bool, vehicles?: array<array<string, mixed>>, error?: string}
+     */
+    public function handleVehicleSearch(Request $request): array
+    {
+        $searchTerm = $request->query->get('q', '');
+
+        if (empty($searchTerm)) {
+            return $this->createErrorResponse('Search term is required');
+        }
+
+        try {
+            $vehicles = $this->searchVehicles($searchTerm);
+
+            return [
+                'success' => true,
+                'vehicles' => $vehicles,
+            ];
+        } catch (\Exception $e) {
+            return $this->createErrorResponse('Search failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Handle vehicle details with user context.
+     *
+     * @return array{success: bool, vehicle?: array<string, mixed>, error?: string}
+     */
+    public function handleVehicleDetails(int $id, ?User $user = null): array
+    {
+        try {
+            $vehicle = $this->getVehicleById($id);
+
+            if (!$vehicle) {
+                return $this->createErrorResponse('Vehicle not found');
+            }
+
+            $vehicleData = $this->vehicleFactory->formatVehicleForApi($vehicle);
+
+            if ($user instanceof User && $user->isBuyer()) {
+                $vehicleData['isFollowed'] = $this->isVehicleFollowedByUser($vehicle, $user);
+            }
+
+            return [
+                'success' => true,
+                'vehicle' => $vehicleData,
+            ];
+        } catch (\Exception $e) {
+            return $this->createErrorResponse('Failed to retrieve vehicle details: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Handle vehicle creation from request.
+     *
+     * @return array{success: bool, vehicle?: array<string, mixed>, error?: string, errors?: array<string, string>}
+     */
+    public function handleVehicleCreation(Request $request, User $user): array
+    {
+        if (!$user->isMerchant()) {
+            return $this->createErrorResponse('Only merchants can create vehicles');
+        }
+
+        $jsonResult = $this->extractJsonData($request);
+        if (!$jsonResult['success']) {
+            return $jsonResult;
+        }
+
+        $data = $jsonResult['data'] ?? [];
+
+        if (!$this->hasStringKeysOnly($data)) {
+            return $this->createErrorResponse('Invalid JSON data or non-string keys');
+        }
+
+        return $this->createVehicle($data, $user);
+    }
+
+    /**
+     * Handle vehicle update from request.
+     *
+     * @return array{success: bool, vehicle?: array<string, mixed>, error?: string, errors?: array<string, string>}
+     */
+    public function handleVehicleUpdate(int $id, Request $request, User $user): array
+    {
+        $vehicle = $this->getVehicleById($id);
+        if (!$vehicle) {
+            return $this->createErrorResponse('Vehicle not found');
+        }
+
+        $jsonResult = $this->extractJsonData($request);
+        if (!$jsonResult['success']) {
+            return $jsonResult;
+        }
+
+        $data = $jsonResult['data'] ?? [];
+
+        if (!$this->hasStringKeysOnly($data)) {
+            return $this->createErrorResponse('Invalid JSON data or non-string keys');
+        }
+
+        return $this->updateVehicle($vehicle, $data, $user);
+    }
+
+    /**
+     * Handle vehicle deletion.
+     *
+     * @return array{success: bool, error?: string}
+     */
+    public function handleVehicleDeletion(int $id, User $user): array
+    {
+        $vehicle = $this->getVehicleById($id);
+        if (!$vehicle) {
+            return $this->createErrorResponse('Vehicle not found');
+        }
+
+        return $this->deleteVehicle($vehicle, $user);
+    }
+
+    /**
+     * Handle merchant vehicles retrieval.
+     *
+     * @return array{success: bool, vehicles?: array<array<string, mixed>>, error?: string}
+     */
+    public function handleMerchantVehicles(User $user): array
+    {
+        try {
+            $vehicles = $this->getVehiclesByMerchant($user);
+
+            return [
+                'success' => true,
+                'vehicles' => $vehicles,
+            ];
+        } catch (\Exception $e) {
+            return $this->createErrorResponse('Failed to retrieve merchant vehicles: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Handle vehicle follow/unfollow actions.
+     *
+     * @return array{success: bool, error?: string, message?: string}
+     */
+    public function handleVehicleFollowAction(int $id, User $user, bool $follow = true): array
+    {
+        $vehicle = $this->getVehicleById($id);
+        if (!$vehicle) {
+            return $this->createErrorResponse('Vehicle not found');
+        }
+
+        return $follow ? $this->followVehicle($vehicle, $user) : $this->unfollowVehicle($vehicle, $user);
+    }
+
+    /**
+     * Handle followed vehicles retrieval.
+     *
+     * @return array{success: bool, vehicles?: array<array<string, mixed>>, error?: string}
+     */
+    public function handleFollowedVehicles(User $user): array
+    {
+        try {
+            $vehicles = $this->getFollowedVehicles($user);
+
+            return [
+                'success' => true,
+                'vehicles' => $vehicles,
+            ];
+        } catch (\Exception $e) {
+            return $this->createErrorResponse('Failed to retrieve followed vehicles: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Create a new vehicle.
+     *
      * @param array<string, mixed> $vehicleData
      *
-     * @return array{success: bool, error?: string, errors?: array<string, string>, vehicle?: array<string, mixed>}
+     * @return array{success: bool, vehicle?: array<string, mixed>, error?: string, errors?: array<string, string>, result?: array<string, mixed>}
+     */
+    public function createVehicle(array $vehicleData, User $merchant): array
+    {
+        if (!isset($vehicleData['type']) || !\is_string($vehicleData['type'])) {
+            return $this->createErrorResponse('Vehicle type is required and must be a string');
+        }
+
+        return $this->executeWithExceptionHandling(
+            function () use ($vehicleData, $merchant) {
+                if (!$this->entityManager->contains($merchant)) {
+                    $merchant = $this->entityManager->find(User::class, $merchant->getId());
+                    if (!$merchant) {
+                        throw new \Exception('Merchant user not found in database');
+                    }
+                }
+
+                $vehicle = $this->vehicleFactory->createVehicleByType($vehicleData['type'], $vehicleData);
+                $vehicle->setMerchant($merchant);
+
+                $validationResult = $this->handleValidationViolations($this->validator->validate($vehicle));
+                if (!$validationResult['success']) {
+                    return $validationResult;
+                }
+
+                $this->entityManager->persist($vehicle);
+                $this->entityManager->flush();
+
+                return ['vehicle' => $this->vehicleFactory->formatVehicleForApi($vehicle)];
+            },
+            'Failed to create vehicle'
+        );
+    }
+
+    /**
+     * Update an existing vehicle.
+     *
+     * @param array<string, mixed> $vehicleData
+     *
+     * @return array{success: bool, vehicle?: array<string, mixed>, error?: string, errors?: array<string, string>, result?: array<string, mixed>}
      */
     public function updateVehicle(Vehicle $vehicle, array $vehicleData, User $merchant): array
     {
         if ($vehicle->getMerchant()->getId() !== $merchant->getId()) {
-            return [
-                'success' => false,
-                'error' => 'You can only update your own vehicles',
-            ];
+            return $this->createErrorResponse('You can only update your own vehicles');
         }
 
-        try {
-            $this->updateVehicleData($vehicle, $vehicleData);
+        return $this->executeWithExceptionHandling(
+            function () use ($vehicle, $vehicleData) {
+                $this->vehicleFactory->updateVehicleWithData($vehicle, $vehicleData);
 
-            $violations = $this->validator->validate($vehicle);
-            if (\count($violations) > 0) {
-                $errors = [];
-                foreach ($violations as $violation) {
-                    $errors[$violation->getPropertyPath()] = $violation->getMessage();
+                $validationResult = $this->handleValidationViolations($this->validator->validate($vehicle));
+                if (!$validationResult['success']) {
+                    return $validationResult;
                 }
 
-                return [
-                    'success' => false,
-                    'errors' => $errors,
-                ];
-            }
+                $this->entityManager->flush();
 
-            $this->entityManager->flush();
-
-            return [
-                'success' => true,
-                'vehicle' => $this->formatVehicle($vehicle),
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => 'Failed to update vehicle: ' . $e->getMessage(),
-            ];
-        }
+                return ['vehicle' => $this->vehicleFactory->formatVehicleForApi($vehicle)];
+            },
+            'Failed to update vehicle'
+        );
     }
 
     /**
-     * @return array{success: bool, error?: string}
+     * Delete a vehicle.
+     *
+     * @return array{success: bool, error?: string, result?: array<string, mixed>}
      */
     public function deleteVehicle(Vehicle $vehicle, User $merchant): array
     {
         if ($vehicle->getMerchant()->getId() !== $merchant->getId()) {
-            return [
-                'success' => false,
-                'error' => 'You can only delete your own vehicles',
-            ];
+            return $this->createErrorResponse('You can only delete your own vehicles');
         }
 
-        try {
-            $this->entityManager->remove($vehicle);
-            $this->entityManager->flush();
+        return $this->executeWithExceptionHandling(
+            function () use ($vehicle) {
+                $this->entityManager->remove($vehicle);
+                $this->entityManager->flush();
 
-            return ['success' => true];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => 'Failed to delete vehicle: ' . $e->getMessage(),
-            ];
-        }
+                return [];
+            },
+            'Failed to delete vehicle'
+        );
     }
 
     /**
-     * @return array<array<string, mixed>>
+     * @return array{success: bool, error?: string, message?: string}
      */
-    public function getVehiclesByMerchant(User $merchant): array
+    public function followVehicle(Vehicle $vehicle, User $buyer): array
     {
-        $vehicles = $this->vehicleRepository->findByMerchant($merchant);
+        return $this->manageVehicleFollow($vehicle, $buyer, true);
+    }
 
-        return array_map(fn (Vehicle $vehicle) => $this->formatVehicle($vehicle), $vehicles);
+    /**
+     * @return array{success: bool, error?: string, message?: string}
+     */
+    public function unfollowVehicle(Vehicle $vehicle, User $buyer): array
+    {
+        return $this->manageVehicleFollow($vehicle, $buyer, false);
+    }
+
+    /**
+     * Follow/unfollow vehicle logic.
+     *
+     * @return array{success: bool, error?: string, message?: string, result?: array<string, mixed>}
+     */
+    private function manageVehicleFollow(Vehicle $vehicle, User $buyer, bool $follow = true): array
+    {
+        if (!$buyer->isBuyer()) {
+            return $this->createErrorResponse('Only buyers can follow/unfollow vehicles');
+        }
+
+        $existingFollow = $this->vehicleFollowRepository->findOneBy([
+            'vehicle' => $vehicle,
+            'user' => $buyer,
+        ]);
+
+        if ($follow) {
+            return $this->handleFollowAction($vehicle, $buyer, $existingFollow);
+        }
+
+        return $this->handleUnfollowAction($existingFollow);
+    }
+
+    /**
+     * Handle follow action.
+     *
+     * @return array{success: bool, error?: string, message?: string, result?: array<string, mixed>}
+     */
+    private function handleFollowAction(Vehicle $vehicle, User $buyer, ?VehicleFollow $existingFollow): array
+    {
+        if ($existingFollow) {
+            return $this->createErrorResponse('You are already following this vehicle');
+        }
+
+        return $this->executeWithExceptionHandling(
+            function () use ($vehicle, $buyer) {
+                $newFollow = new VehicleFollow();
+                $newFollow->setVehicle($vehicle);
+                $newFollow->setUser($buyer);
+                $this->entityManager->persist($newFollow);
+                $this->entityManager->flush();
+
+                return ['message' => 'Vehicle followed successfully'];
+            },
+            'Failed to follow vehicle'
+        );
+    }
+
+    /**
+     * Handle unfollow action.
+     *
+     * @return array{success: bool, error?: string, message?: string, result?: array<string, mixed>}
+     */
+    private function handleUnfollowAction(?VehicleFollow $existingFollow): array
+    {
+        if (!$existingFollow) {
+            return $this->createErrorResponse('You are not following this vehicle');
+        }
+
+        return $this->executeWithExceptionHandling(
+            function () use ($existingFollow) {
+                $this->entityManager->remove($existingFollow);
+                $this->entityManager->flush();
+
+                return ['message' => 'Vehicle unfollowed successfully'];
+            },
+            'Failed to unfollow vehicle'
+        );
     }
 
     /**
@@ -174,13 +400,11 @@ readonly class VehicleService
      */
     public function getAllVehicles(array $filters = []): array
     {
-        if (!empty($filters)) {
-            $vehicles = $this->vehicleRepository->findWithFilters($filters);
-        } else {
-            $vehicles = $this->vehicleRepository->findAvailableVehicles();
-        }
+        $vehicles = !empty($filters)
+            ? $this->vehicleRepository->findWithFilters($filters)
+            : $this->vehicleRepository->findAvailableVehicles();
 
-        return array_map(fn (Vehicle $vehicle) => $this->formatVehicle($vehicle), $vehicles);
+        return array_map([$this->vehicleFactory, 'formatVehicleForApi'], $vehicles);
     }
 
     public function getVehicleById(int $id): ?Vehicle
@@ -195,84 +419,17 @@ readonly class VehicleService
     {
         $vehicles = $this->vehicleRepository->searchVehicles($searchTerm);
 
-        return array_map(fn (Vehicle $vehicle) => $this->formatVehicle($vehicle), $vehicles);
+        return array_map([$this->vehicleFactory, 'formatVehicleForApi'], $vehicles);
     }
 
     /**
-     * @return array{success: bool, error?: string, message?: string}
+     * @return array<array<string, mixed>>
      */
-    public function followVehicle(Vehicle $vehicle, User $buyer): array
+    public function getVehiclesByMerchant(User $merchant): array
     {
-        if (!$buyer->isBuyer()) {
-            return [
-                'success' => false,
-                'error' => 'Only buyers can follow vehicles',
-            ];
-        }
+        $vehicles = $this->vehicleRepository->findByMerchant($merchant);
 
-        $existingFollow = $this->vehicleFollowRepository->findOneBy([
-            'vehicle' => $vehicle,
-            'user' => $buyer,
-        ]);
-
-        if ($existingFollow) {
-            return [
-                'success' => false,
-                'error' => 'You are already following this vehicle',
-            ];
-        }
-
-        try {
-            $follow = new VehicleFollow();
-            $follow->setVehicle($vehicle);
-            $follow->setUser($buyer);
-
-            $this->entityManager->persist($follow);
-            $this->entityManager->flush();
-
-            return [
-                'success' => true,
-                'message' => 'Vehicle followed successfully',
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => 'Failed to follow vehicle: ' . $e->getMessage(),
-            ];
-        }
-    }
-
-    /**
-     * @return array{success: bool, error?: string, message?: string}
-     */
-    public function unfollowVehicle(Vehicle $vehicle, User $buyer): array
-    {
-        $follow = $this->vehicleFollowRepository->findOneBy([
-            'vehicle' => $vehicle,
-            'user' => $buyer,
-        ]);
-
-        if (!$follow) {
-            return [
-                'success' => false,
-                'error' => 'You are not following this vehicle',
-            ];
-        }
-
-        try {
-            $this->entityManager->remove($follow);
-            $this->entityManager->flush();
-
-            return [
-                'success' => true,
-                'message' => 'Vehicle unfollowed successfully',
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => 'Failed to unfollow vehicle: ' . $e->getMessage(),
-            ];
-        }
+        return array_map([$this->vehicleFactory, 'formatVehicleForApi'], $vehicles);
     }
 
     /**
@@ -282,7 +439,7 @@ readonly class VehicleService
     {
         $vehicles = $this->vehicleRepository->findFollowedByUser($buyer);
 
-        return array_map(fn (Vehicle $vehicle) => $this->formatVehicle($vehicle), $vehicles);
+        return array_map([$this->vehicleFactory, 'formatVehicleForApi'], $vehicles);
     }
 
     public function isVehicleFollowedByUser(Vehicle $vehicle, User $user): bool
@@ -291,358 +448,5 @@ readonly class VehicleService
             'vehicle' => $vehicle,
             'user' => $user,
         ]);
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function createVehicleByType(string $type, array $data): Vehicle
-    {
-        return match ($type) {
-            'motorcycle' => $this->createMotorcycle($data),
-            'car' => $this->createCar($data),
-            'truck' => $this->createTruck($data),
-            'trailer' => $this->createTrailer($data),
-            'cart' => $this->createCart($data),
-            default => throw new \InvalidArgumentException('Invalid vehicle type'),
-        };
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function createMotorcycle(array $data): Motorcycle
-    {
-        $motorcycle = new Motorcycle();
-        $this->setCommonVehicleData($motorcycle, $data);
-
-        $engineCapacity = $data['engineCapacity'] ?? '0.00';
-        if (is_numeric($engineCapacity)) {
-            $motorcycle->setEngineCapacity((string) $engineCapacity);
-        } else {
-            $motorcycle->setEngineCapacity('0.00');
-        }
-
-        $colour = $data['colour'] ?? '';
-        if (\is_string($colour)) {
-            $motorcycle->setColour($colour);
-        }
-
-        return $motorcycle;
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function createCar(array $data): Car
-    {
-        $car = new Car();
-        $this->setCommonVehicleData($car, $data);
-
-        $engineCapacity = $data['engineCapacity'] ?? '0.00';
-        if (is_numeric($engineCapacity)) {
-            $car->setEngineCapacity((string) $engineCapacity);
-        } else {
-            $car->setEngineCapacity('0.00');
-        }
-
-        $numberOfDoors = $data['numberOfDoors'] ?? 4;
-        if (\is_int($numberOfDoors) || (\is_string($numberOfDoors) && ctype_digit($numberOfDoors))) {
-            $car->setNumberOfDoors((int) $numberOfDoors);
-        } else {
-            $car->setNumberOfDoors(4);
-        }
-
-        $colour = $data['colour'] ?? '';
-        if (\is_string($colour)) {
-            $car->setColour($colour);
-        }
-
-        if (isset($data['category']) && \is_string($data['category'])) {
-            $car->setCategory(CarCategory::from($data['category']));
-        }
-
-        // Fix: Cast to string, not int, since the trait expects string
-        $permittedMaximumMass = $data['permittedMaximumMass'] ?? 0;
-        if (is_numeric($permittedMaximumMass)) {
-            $car->setPermittedMaximumMass((int) $permittedMaximumMass);
-        } else {
-            $car->setPermittedMaximumMass(0);
-        }
-
-
-        return $car;
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function createTruck(array $data): Truck
-    {
-        $truck = new Truck();
-        $this->setCommonVehicleData($truck, $data);
-
-        $engineCapacity = $data['engineCapacity'] ?? '0.00';
-        if (is_numeric($engineCapacity)) {
-            $truck->setEngineCapacity((string) $engineCapacity);
-        } else {
-            $truck->setEngineCapacity('0.00');
-        }
-
-        $colour = $data['colour'] ?? '';
-        if (\is_string($colour)) {
-            $truck->setColour($colour);
-        }
-
-        $numberOfBeds = $data['numberOfBeds'] ?? 1;
-        if (\is_int($numberOfBeds) || (\is_string($numberOfBeds) && ctype_digit($numberOfBeds))) {
-            $truck->setNumberOfBeds((int) $numberOfBeds);
-        } else {
-            $truck->setNumberOfBeds(1);
-        }
-
-        $permittedMaximumMass = $data['permittedMaximumMass'] ?? 0;
-        if (is_numeric($permittedMaximumMass)) {
-            $truck->setPermittedMaximumMass((int) $permittedMaximumMass);
-        } else {
-            $truck->setPermittedMaximumMass(0);
-        }
-
-
-        return $truck;
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function createTrailer(array $data): Trailer
-    {
-        $trailer = new Trailer();
-        $this->setCommonVehicleData($trailer, $data);
-
-        $numberOfAxles = $data['numberOfAxles'] ?? 1;
-        if (\is_int($numberOfAxles) || (\is_string($numberOfAxles) && ctype_digit($numberOfAxles))) {
-            $trailer->setNumberOfAxles((int) $numberOfAxles);
-        } else {
-            $trailer->setNumberOfAxles(1);
-        }
-
-        $loadCapacity = $data['loadCapacity'] ?? 0;
-        if (\is_int($loadCapacity) || (\is_string($loadCapacity) && ctype_digit($loadCapacity))) {
-            $trailer->setLoadCapacity((int) $loadCapacity);
-        } else {
-            $trailer->setLoadCapacity(0);
-        }
-
-        $permittedMaximumMass = $data['permittedMaximumMass'] ?? 0;
-        if (is_numeric($permittedMaximumMass)) {
-            $trailer->setPermittedMaximumMass((int) $permittedMaximumMass);
-        } else {
-            $trailer->setPermittedMaximumMass(0);
-        }
-
-        return $trailer;
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function createCart(array $data): Cart
-    {
-        $cart = new Cart();
-        $this->setCommonVehicleData($cart, $data);
-
-        $colour = $data['colour'] ?? '';
-        if (\is_string($colour)) {
-            $cart->setColour($colour);
-        }
-
-        $loadCapacity = $data['loadCapacity'] ?? 0;
-        if (\is_int($loadCapacity) || (\is_string($loadCapacity) && ctype_digit($loadCapacity))) {
-            $cart->setLoadCapacity((int) $loadCapacity);
-        } else {
-            $cart->setLoadCapacity(0);
-        }
-
-        $permittedMaximumMass = $data['permittedMaximumMass'] ?? 0;
-        if (is_numeric($permittedMaximumMass)) {
-            $cart->setPermittedMaximumMass((int) $permittedMaximumMass);
-        } else {
-            $cart->setPermittedMaximumMass(0);
-        }
-
-        return $cart;
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function setCommonVehicleData(Vehicle $vehicle, array $data): void
-    {
-        $brand = $data['brand'] ?? '';
-        $vehicle->setBrand(\is_string($brand) ? $brand : '');
-
-        $model = $data['model'] ?? '';
-        $vehicle->setModel(\is_string($model) ? $model : '');
-
-        $price = $data['price'] ?? '0.00';
-        if (is_numeric($price)) {
-            $vehicle->setPrice((string) $price);
-        } else {
-            $vehicle->setPrice('0.00');
-        }
-
-        $quantity = $data['quantity'] ?? 0;
-        if (\is_int($quantity) || (\is_string($quantity) && ctype_digit($quantity))) {
-            $vehicle->setQuantity((int) $quantity);
-        } else {
-            $vehicle->setQuantity(0);
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private function updateVehicleData(Vehicle $vehicle, array $data): void
-    {
-        if (isset($data['brand']) && \is_string($data['brand'])) {
-            $vehicle->setBrand($data['brand']);
-        }
-
-        if (isset($data['model']) && \is_string($data['model'])) {
-            $vehicle->setModel($data['model']);
-        }
-
-        if (isset($data['price']) && is_numeric($data['price'])) {
-            $vehicle->setPrice((string) $data['price']);
-        }
-
-        if (isset($data['quantity']) && (\is_int($data['quantity']) || (\is_string($data['quantity']) && ctype_digit($data['quantity'])))) {
-            $vehicle->setQuantity((int) $data['quantity']);
-        }
-
-        // Update type-specific fields
-        if ($vehicle instanceof Motorcycle) {
-            if (isset($data['engineCapacity']) && is_numeric($data['engineCapacity'])) {
-                $vehicle->setEngineCapacity((string) $data['engineCapacity']);
-            }
-            if (isset($data['colour']) && \is_string($data['colour'])) {
-                $vehicle->setColour($data['colour']);
-            }
-        }
-
-        if ($vehicle instanceof Car) {
-            if (isset($data['engineCapacity']) && is_numeric($data['engineCapacity'])) {
-                $vehicle->setEngineCapacity((string) $data['engineCapacity']);
-            }
-            if (isset($data['numberOfDoors']) && (\is_int($data['numberOfDoors']) || (\is_string($data['numberOfDoors']) && ctype_digit($data['numberOfDoors'])))) {
-                $vehicle->setNumberOfDoors((int) $data['numberOfDoors']);
-            }
-            if (isset($data['category']) && \is_string($data['category'])) {
-                $vehicle->setCategory(CarCategory::from($data['category']));
-            }
-            if (isset($data['colour']) && \is_string($data['colour'])) {
-                $vehicle->setColour($data['colour']);
-            }
-            if (isset($data['permittedMaximumMass']) && (\is_int($data['permittedMaximumMass']) || (\is_string($data['permittedMaximumMass']) && ctype_digit($data['permittedMaximumMass'])))) {
-                $vehicle->setPermittedMaximumMass((int) $data['permittedMaximumMass']);
-            }
-        }
-
-        if ($vehicle instanceof Truck) {
-            if (isset($data['engineCapacity']) && is_numeric($data['engineCapacity'])) {
-                $vehicle->setEngineCapacity((string) $data['engineCapacity']);
-            }
-            if (isset($data['numberOfBeds']) && (\is_int($data['numberOfBeds']) || (\is_string($data['numberOfBeds']) && ctype_digit($data['numberOfBeds'])))) {
-                $vehicle->setNumberOfBeds((int) $data['numberOfBeds']);
-            }
-            if (isset($data['colour']) && \is_string($data['colour'])) {
-                $vehicle->setColour($data['colour']);
-            }
-            if (isset($data['permittedMaximumMass']) && (\is_int($data['permittedMaximumMass']) || (\is_string($data['permittedMaximumMass']) && ctype_digit($data['permittedMaximumMass'])))) {
-                $vehicle->setPermittedMaximumMass((int) $data['permittedMaximumMass']);
-            }
-        }
-
-        if ($vehicle instanceof Trailer) {
-            if (isset($data['numberOfAxles']) && (\is_int($data['numberOfAxles']) || (\is_string($data['numberOfAxles']) && ctype_digit($data['numberOfAxles'])))) {
-                $vehicle->setNumberOfAxles((int) $data['numberOfAxles']);
-            }
-            if (isset($data['loadCapacity']) && (\is_int($data['loadCapacity']) || (\is_string($data['loadCapacity']) && ctype_digit($data['loadCapacity'])))) {
-                $vehicle->setLoadCapacity((int) $data['loadCapacity']);
-            }
-            if (isset($data['permittedMaximumMass']) && (\is_int($data['permittedMaximumMass']) || (\is_string($data['permittedMaximumMass']) && ctype_digit($data['permittedMaximumMass'])))) {
-                $vehicle->setPermittedMaximumMass((int) $data['permittedMaximumMass']);
-            }
-        }
-        if ($vehicle instanceof Cart) {
-            if (isset($data['colour']) && \is_string($data['colour'])) {
-                $vehicle->setColour($data['colour']);
-            }
-
-            if (isset($data['loadCapacity']) && (\is_int($data['loadCapacity']) || (\is_string($data['loadCapacity']) && ctype_digit($data['loadCapacity'])))) {
-                $vehicle->setLoadCapacity((int) $data['loadCapacity']);
-            }
-            if (isset($data['permittedMaximumMass']) && (\is_int($data['permittedMaximumMass']) || (\is_string($data['permittedMaximumMass']) && ctype_digit($data['permittedMaximumMass'])))) {
-                $vehicle->setPermittedMaximumMass((int) $data['permittedMaximumMass']);
-            }
-        }
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function formatVehicle(Vehicle $vehicle): array
-    {
-        $data = [
-            'id' => $vehicle->getId(),
-            'type' => $vehicle->getVehicleType()->value,
-            'brand' => $vehicle->getBrand(),
-            'model' => $vehicle->getModel(),
-            'price' => $vehicle->getPrice(),
-            'quantity' => $vehicle->getQuantity(),
-            'merchant' => [
-                'id' => $vehicle->getMerchant()->getId(),
-                'fullName' => $vehicle->getMerchant()->getFullName(),
-                'email' => $vehicle->getMerchant()->getEmail(),
-            ],
-            'createdAt' => $vehicle->getCreatedAt()->format('Y-m-d H:i:s'),
-            'updatedAt' => $vehicle->getUpdatedAt()?->format('Y-m-d H:i:s'),
-            'followersCount' => $vehicle->getFollows()->count(),
-        ];
-
-        // Add type-specific data
-        if ($vehicle instanceof Motorcycle) {
-            $data['engineCapacity'] = $vehicle->getEngineCapacity();
-            $data['colour'] = $vehicle->getColour();
-        }
-
-        if ($vehicle instanceof Car) {
-            $data['engineCapacity'] = $vehicle->getEngineCapacity();
-            $data['numberOfDoors'] = $vehicle->getNumberOfDoors();
-            $data['category'] = $vehicle->getCategory()->value;
-            $data['colour'] = $vehicle->getColour();
-            $data['permittedMaximumMass'] = $vehicle->getPermittedMaximumMass();
-        }
-
-        if ($vehicle instanceof Truck) {
-            $data['engineCapacity'] = $vehicle->getEngineCapacity();
-            $data['numberOfBeds'] = $vehicle->getNumberOfBeds();
-            $data['colour'] = $vehicle->getColour();
-            $data['permittedMaximumMass'] = $vehicle->getPermittedMaximumMass();
-        }
-
-        if ($vehicle instanceof Trailer) {
-            $data['numberOfAxles'] = $vehicle->getNumberOfAxles();
-            $data['loadCapacity'] = $vehicle->getLoadCapacity();
-            $data['permittedMaximumMass'] = $vehicle->getPermittedMaximumMass();
-        }
-        if ($vehicle instanceof Cart) {
-            $data['colour'] = $vehicle->getColour();
-            $data['loadCapacity'] = $vehicle->getLoadCapacity();
-            $data['permittedMaximumMass'] = $vehicle->getPermittedMaximumMass();
-        }
-
-        return $data;
     }
 }

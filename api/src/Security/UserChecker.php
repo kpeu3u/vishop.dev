@@ -15,7 +15,6 @@ class UserChecker implements UserCheckerInterface
             return;
         }
 
-        // Check if user is active before authentication
         if (!$user->isActive()) {
             throw new CustomUserMessageAccountStatusException('Your account is not active. Please contact the administrator.');
         }
@@ -27,8 +26,6 @@ class UserChecker implements UserCheckerInterface
             return;
         }
 
-        // Additional checks after authentication can be added here
-        // For example, checking if the account was deactivated after login
         if (!$user->isActive()) {
             throw new CustomUserMessageAccountStatusException('Your account has been deactivated.');
         }
