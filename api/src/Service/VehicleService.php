@@ -30,7 +30,7 @@ class VehicleService extends AbstractService
     public function handleVehicleList(Request $request): array
     {
         try {
-            $allowedFilters = ['brand', 'model', 'minPrice', 'maxPrice', 'inStock'];
+            $allowedFilters = ['brand', 'model', 'minPrice', 'maxPrice', 'inStock', 'type'];
             $filters = $this->extractFiltersFromRequest($request, $allowedFilters);
             $vehicles = $this->getAllVehicles($filters);
 
@@ -42,6 +42,7 @@ class VehicleService extends AbstractService
             return $this->createErrorResponse('Failed to retrieve vehicles: ' . $e->getMessage());
         }
     }
+
 
     /**
      * Handle vehicle search from request.

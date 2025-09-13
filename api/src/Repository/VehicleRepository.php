@@ -2,6 +2,11 @@
 
 namespace App\Repository;
 
+use App\Entity\Car;
+use App\Entity\Cart;
+use App\Entity\Motorcycle;
+use App\Entity\Trailer;
+use App\Entity\Truck;
 use App\Entity\User;
 use App\Entity\Vehicle;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -146,6 +151,11 @@ class VehicleRepository extends ServiceEntityRepository
                 ->setParameter('colour', '%' . $criteria['colour'] . '%');
         }
 
+        if (!empty($criteria['type']) && \is_string($criteria['type'])) {
+            $qb->andWhere('p INSTANCE OF :vehicleType')
+                ->setParameter('vehicleType', $this->getVehicleClassByType($criteria['type']));
+        }
+
         if (!empty($criteria['minPrice'])) {
             $qb->andWhere('p.price >= :minPrice')
                 ->setParameter('minPrice', $criteria['minPrice']);
@@ -160,4 +170,19 @@ class VehicleRepository extends ServiceEntityRepository
             $qb->andWhere('p.quantity > 0');
         }
     }
+    /**
+     * Get the vehicle class name by type string.
+     */
+    private function getVehicleClassByType(string $type): string
+    {
+        return match ($type) {
+            'motorcycle' => Motorcycle::class,
+            'car' => Car::class,
+            'truck' => Truck::class,
+            'trailer' => Trailer::class,
+            'cart' => Cart::class,
+            default => throw new \InvalidArgumentException('Unknown vehicle type: ' . $type),
+        };
+    }
+
 }

@@ -31,4 +31,10 @@ enum VehicleType: string
 
         return $choices;
     }
+
+    /** @return array<string> */
+    public static function getValues(): array
+    {
+        return array_map(fn(self $case) => $case->value, self::cases());
+    }
 }

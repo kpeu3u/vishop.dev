@@ -34,9 +34,6 @@ security:
             stateless: true
             jwt: ~
             entry_point: 'jwt'
-            refresh_jwt:
-                check_path: /api/token/refresh
-                provider: database_users
 
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
@@ -45,9 +42,6 @@ security:
     access_control:
         # Auth endpoints (public access)
         - { path: ^/api/auth, roles: PUBLIC_ACCESS }
-
-        # Token refresh endpoint (public access)
-        - { path: ^/api/token/refresh, roles: PUBLIC_ACCESS }
 
         # Buyer-specific endpoints (most specific patterns first)
         - { path: ^/api/vehicles/\d+/follow, roles: 'ROLE_BUYER', methods: [POST] }

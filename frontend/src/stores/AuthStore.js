@@ -81,7 +81,6 @@ class AuthStore {
         }
     }
 
-    // Update the login method to store refresh token
     async login(email, password) {
         runInAction(() => {
             this.isLoading = true;
@@ -109,11 +108,6 @@ class AuthStore {
 
                 localStorage.setItem('jwt_token', response.token);
                 localStorage.setItem('user_data', JSON.stringify(user));
-                
-                // Store refresh token if provided
-                if (response.refresh_token) {
-                    localStorage.setItem('refresh_token', response.refresh_token);
-                }
 
                 runInAction(() => {
                     this.user = user;
@@ -129,7 +123,7 @@ class AuthStore {
 
             // Handle different types of errors
             let errorMessage;
-            
+
             if (error.response) {
                 // Server responded with error status
                 if (error.response.status === 401) {
@@ -148,7 +142,7 @@ class AuthStore {
                 // Other error
                 errorMessage = error.message || 'Login failed';
             }
-            
+
             runInAction(() => {
                 this.error = errorMessage;
                 this.isLoading = false;
@@ -167,7 +161,7 @@ class AuthStore {
 
         try {
             const response = await authAPI.register(userData);
-            
+
             // Check if registration was successful based on the backend response structure
             // Backend returns: { message: "User created successfully", user: {...} }
             if (response.message && response.user) {
@@ -175,10 +169,10 @@ class AuthStore {
                     this.successMessage = 'Registration successful! Please log in to continue.';
                     this.isLoading = false;
                 });
-                return { 
-                    success: true, 
+                return {
+                    success: true,
                     message: 'Registration successful! Please log in to continue.',
-                    user: response.user 
+                    user: response.user
                 };
             } else {
                 throw new Error('Unexpected response format');
@@ -224,7 +218,6 @@ class AuthStore {
         });
     }
 
-    // Update logout method to clear refresh token
     async logout() {
         runInAction(() => {
             this.isLoading = true;
@@ -238,7 +231,6 @@ class AuthStore {
         }
 
         localStorage.removeItem('jwt_token');
-        localStorage.removeItem('refresh_token');
         localStorage.removeItem('user_data');
 
         runInAction(() => {
@@ -247,41 +239,6 @@ class AuthStore {
             this.isLoading = false;
             this.error = null;
         });
-    }
-
-    // Add manual refresh token method
-    async refreshToken() {
-        runInAction(() => {
-            this.isLoading = true;
-            this.error = null;
-        });
-
-        try {
-            const response = await authAPI.refreshToken();
-
-            // Update user data if provided
-            if (response.user) {
-                runInAction(() => {
-                    this.user = response.user;
-                });
-                localStorage.setItem('user_data', JSON.stringify(response.user));
-            }
-
-            runInAction(() => {
-                this.isLoading = false;
-            });
-
-            return { success: true };
-        } catch (error) {
-            runInAction(() => {
-                this.handleError(error);
-                this.isLoading = false;
-            });
-
-            // If refresh fails, logout user
-            await this.logout();
-            return { success: false };
-        }
     }
 
     // Verify token method for explicit verification only

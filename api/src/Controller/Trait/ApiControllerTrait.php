@@ -27,25 +27,30 @@ trait ApiControllerTrait
      */
     private function createApiResponse(array $result, int $successStatusCode = 200): JsonResponse
     {
-        $statusCode = match (true) {
-            !$result['success'] && $this->isNotFoundError($result) => 404,
-            !$result['success'] => 400,
-            200 !== $successStatusCode => $successStatusCode,
-            default => 200,
-        };
-
+        $statusCode = $this->determineStatusCode($result, $successStatusCode);
         return $this->json($result, $statusCode);
     }
 
     /**
-     * Check if the error indicates a "not found" scenario.
+     * Determine appropriate HTTP status code based on result.
      *
      * @param array<string, mixed> $result
      */
-    private function isNotFoundError(array $result): bool
+    private function determineStatusCode(array $result, int $successStatusCode): int
     {
-        $error = $result['error'] ?? '';
+        if ($result['success'] ?? true) {
+            return $successStatusCode;
+        }
 
-        return \is_string($error) && str_contains($error, 'not found');
+        $error = $result['error'] ?? '';
+        if (is_string($error) && str_contains(strtolower($error), 'not found')) {
+            return 404;
+        }
+
+        if (isset($result['errors']) && is_array($result['errors'])) {
+            return 422;
+        }
+
+        return 400;
     }
 }

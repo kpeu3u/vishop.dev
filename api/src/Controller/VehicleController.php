@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Controller\Trait\ApiControllerTrait;
 use App\Entity\User;
+use App\Service\RequestValidationService;
 use App\Service\VehicleService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,22 +20,31 @@ class VehicleController extends AbstractController
 
     public function __construct(
         private readonly VehicleService $vehicleService,
+        private readonly RequestValidationService $requestValidationService,
     ) {
     }
 
     #[Route('', name: 'list', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
-        $result = $this->vehicleService->handleVehicleList($request);
+        $validationResult = $this->requestValidationService->validateQueryFilters($request);
+        if (!$validationResult['success']) {
+            return $this->createApiResponse($validationResult, 400);
+        }
 
+        $result = $this->vehicleService->handleVehicleList($request);
         return $this->createApiResponse($result);
     }
 
     #[Route('/search', name: 'search', methods: ['GET'])]
     public function search(Request $request): JsonResponse
     {
-        $result = $this->vehicleService->handleVehicleSearch($request);
+        $validationResult = $this->requestValidationService->validateSearchQuery($request);
+        if (!$validationResult['success']) {
+            return $this->createApiResponse($validationResult, 400);
+        }
 
+        $result = $this->vehicleService->handleVehicleSearch($request);
         return $this->createApiResponse($result);
     }
 
@@ -51,6 +61,16 @@ class VehicleController extends AbstractController
     #[IsGranted('ROLE_MERCHANT')]
     public function create(Request $request): JsonResponse
     {
+        $jsonValidation = $this->requestValidationService->validateJsonRequest($request);
+        if (!$jsonValidation['success']) {
+            return $this->createApiResponse($jsonValidation, 400);
+        }
+
+        $dataValidation = $this->requestValidationService->validateVehicleCreationData($jsonValidation['data']);
+        if (!$dataValidation['success']) {
+            return $this->createApiResponse($dataValidation, 400);
+        }
+
         $user = $this->getAuthenticatedUser();
         $result = $this->vehicleService->handleVehicleCreation($request, $user);
 
@@ -61,6 +81,21 @@ class VehicleController extends AbstractController
     #[IsGranted('ROLE_MERCHANT')]
     public function update(int $id, Request $request): JsonResponse
     {
+        $vehicle = $this->vehicleService->getVehicleById($id);
+        if (!$vehicle) {
+            return $this->createApiResponse(['success' => false, 'error' => 'Vehicle not found'], 404);
+        }
+
+        $jsonValidation = $this->requestValidationService->validateJsonRequest($request);
+        if (!$jsonValidation['success']) {
+            return $this->createApiResponse($jsonValidation, 400);
+        }
+
+        $dataValidation = $this->requestValidationService->validateVehicleUpdateData($jsonValidation['data']);
+        if (!$dataValidation['success']) {
+            return $this->createApiResponse($dataValidation, 400);
+        }
+
         $user = $this->getAuthenticatedUser();
         $result = $this->vehicleService->handleVehicleUpdate($id, $request, $user);
 
@@ -71,6 +106,11 @@ class VehicleController extends AbstractController
     #[IsGranted('ROLE_MERCHANT')]
     public function delete(int $id): JsonResponse
     {
+        $vehicle = $this->vehicleService->getVehicleById($id);
+        if (!$vehicle) {
+            return $this->createApiResponse(['success' => false, 'error' => 'Vehicle not found'], 404);
+        }
+
         $user = $this->getAuthenticatedUser();
         $result = $this->vehicleService->handleVehicleDeletion($id, $user);
 
@@ -91,6 +131,11 @@ class VehicleController extends AbstractController
     #[IsGranted('ROLE_BUYER')]
     public function follow(int $id): JsonResponse
     {
+        $vehicle = $this->vehicleService->getVehicleById($id);
+        if (!$vehicle) {
+            return $this->createApiResponse(['success' => false, 'error' => 'Vehicle not found'], 404);
+        }
+
         $user = $this->getAuthenticatedUser();
         $result = $this->vehicleService->handleVehicleFollowAction($id, $user);
 
@@ -101,6 +146,11 @@ class VehicleController extends AbstractController
     #[IsGranted('ROLE_BUYER')]
     public function unfollow(int $id): JsonResponse
     {
+        $vehicle = $this->vehicleService->getVehicleById($id);
+        if (!$vehicle) {
+            return $this->createApiResponse(['success' => false, 'error' => 'Vehicle not found'], 404);
+        }
+
         $user = $this->getAuthenticatedUser();
         $result = $this->vehicleService->handleVehicleFollowAction($id, $user, false);
 
