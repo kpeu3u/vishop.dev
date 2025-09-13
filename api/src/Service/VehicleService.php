@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\User;
 use App\Entity\Vehicle;
 use App\Entity\VehicleFollow;
+use App\Pagination\Paginator;
 use App\Repository\VehicleFollowRepository;
 use App\Repository\VehicleRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -25,18 +26,29 @@ class VehicleService extends AbstractService
     /**
      * Handle vehicle listing with filters from request.
      *
-     * @return array{success: bool, vehicles?: array<array<string, mixed>>, error?: string}
+     * @return array{success: bool, vehicles?: array<array<string, mixed>>, pagination?: array<string, mixed>, error?: string}
      */
     public function handleVehicleList(Request $request): array
     {
         try {
             $allowedFilters = ['brand', 'model', 'minPrice', 'maxPrice', 'inStock', 'type'];
             $filters = $this->extractFiltersFromRequest($request, $allowedFilters);
-            $vehicles = $this->getAllVehicles($filters);
+
+            $page = max(1, (int) $request->query->get('page', 1));
+            $pageSize = min(50, max(1, (int) $request->query->get('limit', 10))); // Max 50 items per page
+
+            $paginator = $this->vehicleRepository->findWithFilters($filters, $pageSize);
+            $paginator->paginate($page);
+
+            $vehicles = [];
+            foreach ($paginator->getResults() as $vehicle) {
+                $vehicles[] = $this->vehicleFactory->formatVehicleForApi($vehicle);
+            }
 
             return [
                 'success' => true,
                 'vehicles' => $vehicles,
+                'pagination' => $this->formatPaginationData($paginator),
             ];
         } catch (\Exception $e) {
             return $this->createErrorResponse('Failed to retrieve vehicles: ' . $e->getMessage());
@@ -46,7 +58,7 @@ class VehicleService extends AbstractService
     /**
      * Handle vehicle search from request.
      *
-     * @return array{success: bool, vehicles?: array<array<string, mixed>>, error?: string}
+     * @return array{success: bool, vehicles?: array<array<string, mixed>>, pagination?: array<string, mixed>, error?: string}
      */
     public function handleVehicleSearch(Request $request): array
     {
@@ -57,11 +69,21 @@ class VehicleService extends AbstractService
         }
 
         try {
-            $vehicles = $this->searchVehicles($searchTerm);
+            $page = max(1, (int) $request->query->get('page', 1));
+            $pageSize = min(50, max(1, (int) $request->query->get('limit', 10)));
+
+            $paginator = $this->vehicleRepository->searchVehicles($searchTerm, $pageSize);
+            $paginator->paginate($page);
+
+            $vehicles = [];
+            foreach ($paginator->getResults() as $vehicle) {
+                $vehicles[] = $this->vehicleFactory->formatVehicleForApi($vehicle);
+            }
 
             return [
                 'success' => true,
                 'vehicles' => $vehicles,
+                'pagination' => $this->formatPaginationData($paginator),
             ];
         } catch (\Exception $e) {
             return $this->createErrorResponse('Search failed: ' . $e->getMessage());
@@ -166,16 +188,26 @@ class VehicleService extends AbstractService
     /**
      * Handle merchant vehicles retrieval.
      *
-     * @return array{success: bool, vehicles?: array<array<string, mixed>>, error?: string}
+     * @return array{success: bool, vehicles?: array<array<string, mixed>>, pagination?: array<string, mixed>, error?: string}
      */
-    public function handleMerchantVehicles(User $user): array
+    public function handleMerchantVehicles(User $user, Request $request): array
     {
         try {
-            $vehicles = $this->getVehiclesByMerchant($user);
+            $page = max(1, (int) $request->query->get('page', 1));
+            $pageSize = min(50, max(1, (int) $request->query->get('limit', 10)));
+
+            $paginator = $this->vehicleRepository->findByMerchant($user, $pageSize);
+            $paginator->paginate($page);
+
+            $vehicles = [];
+            foreach ($paginator->getResults() as $vehicle) {
+                $vehicles[] = $this->vehicleFactory->formatVehicleForApi($vehicle);
+            }
 
             return [
                 'success' => true,
                 'vehicles' => $vehicles,
+                'pagination' => $this->formatPaginationData($paginator),
             ];
         } catch (\Exception $e) {
             return $this->createErrorResponse('Failed to retrieve merchant vehicles: ' . $e->getMessage());
@@ -200,16 +232,26 @@ class VehicleService extends AbstractService
     /**
      * Handle followed vehicles retrieval.
      *
-     * @return array{success: bool, vehicles?: array<array<string, mixed>>, error?: string}
+     * @return array{success: bool, vehicles?: array<array<string, mixed>>, pagination?: array<string, mixed>, error?: string}
      */
-    public function handleFollowedVehicles(User $user): array
+    public function handleFollowedVehicles(User $user, Request $request): array
     {
         try {
-            $vehicles = $this->getFollowedVehicles($user);
+            $page = max(1, (int) $request->query->get('page', 1));
+            $pageSize = min(50, max(1, (int) $request->query->get('limit', 10)));
+
+            $paginator = $this->vehicleRepository->findFollowedByUser($user, $pageSize);
+            $paginator->paginate($page);
+
+            $vehicles = [];
+            foreach ($paginator->getResults() as $vehicle) {
+                $vehicles[] = $this->vehicleFactory->formatVehicleForApi($vehicle);
+            }
 
             return [
                 'success' => true,
                 'vehicles' => $vehicles,
+                'pagination' => $this->formatPaginationData($paginator),
             ];
         } catch (\Exception $e) {
             return $this->createErrorResponse('Failed to retrieve followed vehicles: ' . $e->getMessage());
@@ -393,54 +435,54 @@ class VehicleService extends AbstractService
         );
     }
 
-    /**
-     * @param array<string, mixed> $filters
-     *
-     * @return array<array<string, mixed>>
-     */
-    public function getAllVehicles(array $filters = []): array
-    {
-        $vehicles = !empty($filters)
-            ? $this->vehicleRepository->findWithFilters($filters)
-            : $this->vehicleRepository->findAvailableVehicles();
-
-        return array_map([$this->vehicleFactory, 'formatVehicleForApi'], $vehicles);
-    }
-
     public function getVehicleById(int $id): ?Vehicle
     {
         return $this->vehicleRepository->find($id);
     }
 
-    /**
-     * @return array<array<string, mixed>>
-     */
-    public function searchVehicles(string $searchTerm): array
-    {
-        $vehicles = $this->vehicleRepository->searchVehicles($searchTerm);
+    //    /**
+    //     * @param array<string, mixed> $filters
+    //     *
+    //     * @return array<array<string, mixed>>
+    //     */
+    //    public function getAllVehicles(array $filters = []): array
+    //    {
+    //        $vehicles = !empty($filters)
+    //            ? $this->vehicleRepository->findWithFilters($filters)
+    //            : $this->vehicleRepository->findAvailableVehicles();
+    //
+    //        return array_map([$this->vehicleFactory, 'formatVehicleForApi'], $vehicles);
+    //    }
 
-        return array_map([$this->vehicleFactory, 'formatVehicleForApi'], $vehicles);
-    }
+    //    /**
+    //     * @return array<array<string, mixed>>
+    //     */
+    //    public function searchVehicles(string $searchTerm): array
+    //    {
+    //        $vehicles = $this->vehicleRepository->searchVehicles($searchTerm);
+    //
+    //        return array_map([$this->vehicleFactory, 'formatVehicleForApi'], $vehicles);
+    //    }
 
-    /**
-     * @return array<array<string, mixed>>
-     */
-    public function getVehiclesByMerchant(User $merchant): array
-    {
-        $vehicles = $this->vehicleRepository->findByMerchant($merchant);
+    //    /**
+    //     * @return array<array<string, mixed>>
+    //     */
+    //    public function getVehiclesByMerchant(User $merchant): array
+    //    {
+    //        $vehicles = $this->vehicleRepository->findByMerchant($merchant);
+    //
+    //        return array_map([$this->vehicleFactory, 'formatVehicleForApi'], $vehicles);
+    //    }
 
-        return array_map([$this->vehicleFactory, 'formatVehicleForApi'], $vehicles);
-    }
-
-    /**
-     * @return array<array<string, mixed>>
-     */
-    public function getFollowedVehicles(User $buyer): array
-    {
-        $vehicles = $this->vehicleRepository->findFollowedByUser($buyer);
-
-        return array_map([$this->vehicleFactory, 'formatVehicleForApi'], $vehicles);
-    }
+    //    /**
+    //     * @return array<array<string, mixed>>
+    //     */
+    //    public function getFollowedVehicles(User $buyer): array
+    //    {
+    //        $vehicles = $this->vehicleRepository->findFollowedByUser($buyer);
+    //
+    //        return array_map([$this->vehicleFactory, 'formatVehicleForApi'], $vehicles);
+    //    }
 
     public function isVehicleFollowedByUser(Vehicle $vehicle, User $user): bool
     {
@@ -448,5 +490,25 @@ class VehicleService extends AbstractService
             'vehicle' => $vehicle,
             'user' => $user,
         ]);
+    }
+
+    /**
+     * Format pagination data for API response.
+     *
+     * @return array<string, mixed>
+     */
+    private function formatPaginationData(Paginator $paginator): array
+    {
+        return [
+            'currentPage' => $paginator->getCurrentPage(),
+            'lastPage' => $paginator->getLastPage(),
+            'pageSize' => $paginator->getPageSize(),
+            'totalResults' => $paginator->getNumResults(),
+            'hasPreviousPage' => $paginator->hasPreviousPage(),
+            'hasNextPage' => $paginator->hasNextPage(),
+            'previousPage' => $paginator->hasPreviousPage() ? $paginator->getPreviousPage() : null,
+            'nextPage' => $paginator->hasNextPage() ? $paginator->getNextPage() : null,
+            'hasToPaginate' => $paginator->hasToPaginate(),
+        ];
     }
 }

@@ -68,7 +68,7 @@ class VehicleController extends AbstractController
             return $this->createApiResponse($jsonValidation, 400);
         }
 
-        $dataValidation = $this->requestValidationService->validateVehicleCreationData($jsonValidation['data']??[]);
+        $dataValidation = $this->requestValidationService->validateVehicleCreationData($jsonValidation['data'] ?? []);
         if (!$dataValidation['success']) {
             return $this->createApiResponse($dataValidation, 400);
         }
@@ -93,7 +93,7 @@ class VehicleController extends AbstractController
             return $this->createApiResponse($jsonValidation, 400);
         }
 
-        $dataValidation = $this->requestValidationService->validateVehicleUpdateData($jsonValidation['data']??[]);
+        $dataValidation = $this->requestValidationService->validateVehicleUpdateData($jsonValidation['data'] ?? []);
         if (!$dataValidation['success']) {
             return $this->createApiResponse($dataValidation, 400);
         }
@@ -121,10 +121,10 @@ class VehicleController extends AbstractController
 
     #[Route('/my-vehicles', name: 'my_vehicles', methods: ['GET'])]
     #[IsGranted('ROLE_MERCHANT')]
-    public function myVehicles(): JsonResponse
+    public function myVehicles(Request $request): JsonResponse
     {
         $user = $this->getAuthenticatedUser();
-        $result = $this->vehicleService->handleMerchantVehicles($user);
+        $result = $this->vehicleService->handleMerchantVehicles($user, $request);
 
         return $this->createApiResponse($result);
     }
@@ -161,10 +161,10 @@ class VehicleController extends AbstractController
 
     #[Route('/followed', name: 'followed', methods: ['GET'])]
     #[IsGranted('ROLE_BUYER')]
-    public function followedVehicles(): JsonResponse
+    public function followedVehicles(Request $request): JsonResponse
     {
         $user = $this->getAuthenticatedUser();
-        $result = $this->vehicleService->handleFollowedVehicles($user);
+        $result = $this->vehicleService->handleFollowedVehicles($user, $request);
 
         return $this->createApiResponse($result);
     }

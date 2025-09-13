@@ -10,22 +10,31 @@ class VehicleStore {
     error = null;
     successMessage = null;
     validationErrors = {};
+    
+    // Pagination data
+    pagination = {
+        vehicles: null,
+        followedVehicles: null,
+        myVehicles: null
+    };
 
     constructor() {
         makeAutoObservable(this);
     }
 
     // Actions
-    async loadVehicles(filters = {}) {
+    async loadVehicles(filters = {}, page = 1, pageSize = 10) {
         runInAction(() => {
             this.isLoading = true;
             this.error = null;
         });
 
         try {
-            const response = await vehicleAPI.getVehicles(filters);
+            const params = { ...filters, page, limit: pageSize };
+            const response = await vehicleAPI.getVehicles(params);
             runInAction(() => {
                 this.vehicles = response.vehicles;
+                this.pagination.vehicles = response.pagination;
                 this.isLoading = false;
             });
         } catch (error) {
@@ -36,16 +45,17 @@ class VehicleStore {
         }
     }
 
-    async searchVehicles(searchTerm) {
+    async searchVehicles(searchTerm, page = 1, pageSize = 10) {
         runInAction(() => {
             this.isLoading = true;
             this.error = null;
         });
 
         try {
-            const response = await vehicleAPI.searchVehicles(searchTerm);
+            const response = await vehicleAPI.searchVehicles(searchTerm, page, pageSize);
             runInAction(() => {
                 this.vehicles = response.vehicles;
+                this.pagination.vehicles = response.pagination;
                 this.isLoading = false;
             });
         } catch (error) {
@@ -173,16 +183,17 @@ class VehicleStore {
         return { success: false };
     }
 
-    async loadMyVehicles() {
+    async loadMyVehicles(page = 1, pageSize = 10) {
         runInAction(() => {
             this.isLoading = true;
             this.error = null;
         });
 
         try {
-            const response = await vehicleAPI.getMyVehicles();
+            const response = await vehicleAPI.getMyVehicles(page, pageSize);
             runInAction(() => {
                 this.myVehicles = response.vehicles;
+                this.pagination.myVehicles = response.pagination;
                 this.isLoading = false;
             });
         } catch (error) {
@@ -242,16 +253,17 @@ class VehicleStore {
         return { success: false };
     }
 
-    async loadFollowedVehicles() {
+    async loadFollowedVehicles(page = 1, pageSize = 10) {
         runInAction(() => {
             this.isLoading = true;
             this.error = null;
         });
 
         try {
-            const response = await vehicleAPI.getFollowedVehicles();
+            const response = await vehicleAPI.getFollowedVehicles(page, pageSize);
             runInAction(() => {
                 this.followedVehicles = response.vehicles;
+                this.pagination.followedVehicles = response.pagination;
                 this.isLoading = false;
             });
         } catch (error) {

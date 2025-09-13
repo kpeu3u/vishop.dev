@@ -4,33 +4,64 @@ import { Container, Row, Col, Card, Button, Spinner, Alert, Form, InputGroup } f
 import VehicleStore from '../../stores/VehicleStore';
 import VehicleFilters from './VehicleFilters';
 import VehicleCard from './VehicleCard';
+import Pagination from '../common/Pagination';
 
 const VehicleList = observer(() => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState({});
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(12);
+    const [isSearchMode, setIsSearchMode] = useState(false);
 
     useEffect(() => {
-        VehicleStore.loadVehicles();
+        VehicleStore.loadVehicles({}, 1, pageSize);
         return () => VehicleStore.clearMessages();
-    }, []);
+    }, [pageSize]);
 
     const handleSearch = async (e) => {
         e.preventDefault();
         if (searchTerm.trim()) {
-            await VehicleStore.searchVehicles(searchTerm);
+            setIsSearchMode(true);
+            setCurrentPage(1);
+            await VehicleStore.searchVehicles(searchTerm, 1, pageSize);
         } else {
-            await VehicleStore.loadVehicles(filters);
+            await handleClearSearch();
         }
+    };
+
+    const handleClearSearch = async () => {
+        setSearchTerm('');
+        setIsSearchMode(false);
+        setCurrentPage(1);
+        await VehicleStore.loadVehicles(filters, 1, pageSize);
     };
 
     const handleFilterChange = async (newFilters) => {
         setFilters(newFilters);
-        await VehicleStore.loadVehicles(newFilters);
+        setCurrentPage(1);
+        setIsSearchMode(false);
+        await VehicleStore.loadVehicles(newFilters, 1, pageSize);
     };
 
-    const clearSearch = async () => {
-        setSearchTerm('');
-        await VehicleStore.loadVehicles(filters);
+    const handlePageChange = async (page) => {
+        setCurrentPage(page);
+        if (isSearchMode && searchTerm.trim()) {
+            await VehicleStore.searchVehicles(searchTerm, page, pageSize);
+        } else {
+            await VehicleStore.loadVehicles(filters, page, pageSize);
+        }
+        // Scroll to top when changing pages
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handlePageSizeChange = (newPageSize) => {
+        setPageSize(newPageSize);
+        setCurrentPage(1);
+        if (isSearchMode && searchTerm.trim()) {
+            VehicleStore.searchVehicles(searchTerm, 1, newPageSize);
+        } else {
+            VehicleStore.loadVehicles(filters, 1, newPageSize);
+        }
     };
 
     return (
@@ -56,8 +87,8 @@ const VehicleList = observer(() => {
                                 <i className="bi bi-search me-1"></i>
                                 Search
                             </Button>
-                            {searchTerm && (
-                                <Button variant="outline-secondary" onClick={clearSearch}>
+                            {(searchTerm || isSearchMode) && (
+                                <Button variant="outline-secondary" onClick={handleClearSearch}>
                                     <i className="bi bi-x"></i>
                                 </Button>
                             )}
@@ -108,9 +139,27 @@ const VehicleList = observer(() => {
                             ) : (
                                 <>
                                     <div className="d-flex justify-content-between align-items-center mb-3">
-                                        <p className="text-muted mb-0">
-                                            {VehicleStore.vehicles.length} vehicle{VehicleStore.vehicles.length !== 1 ? 's' : ''} found
-                                        </p>
+                                        <div>
+                                            <p className="text-muted mb-0">
+                                                {VehicleStore.pagination.vehicles?.totalResults || VehicleStore.vehicles.length} vehicle
+                                                {(VehicleStore.pagination.vehicles?.totalResults || VehicleStore.vehicles.length) !== 1 ? 's' : ''} found
+                                                {isSearchMode && ` for "${searchTerm}"`}
+                                            </p>
+                                        </div>
+                                        <div className="d-flex align-items-center">
+                                            <span className="me-2 text-muted">Show:</span>
+                                            <Form.Select 
+                                                size="sm" 
+                                                style={{ width: 'auto' }}
+                                                value={pageSize}
+                                                onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
+                                            >
+                                                <option value={6}>6 per page</option>
+                                                <option value={12}>12 per page</option>
+                                                <option value={24}>24 per page</option>
+                                                <option value={48}>48 per page</option>
+                                            </Form.Select>
+                                        </div>
                                     </div>
 
                                     <Row>
@@ -120,6 +169,15 @@ const VehicleList = observer(() => {
                                             </Col>
                                         ))}
                                     </Row>
+
+                                    {/* Pagination */}
+                                    {VehicleStore.pagination.vehicles && (
+                                        <Pagination
+                                            paginationData={VehicleStore.pagination.vehicles}
+                                            onPageChange={handlePageChange}
+                                            className="mt-4"
+                                        />
+                                    )}
                                 </>
                             )}
                         </>

@@ -222,7 +222,6 @@ class RequestValidationService
         return $errors;
     }
 
-
     /**
      * @param array<int|string, mixed> $data
      *
@@ -252,12 +251,44 @@ class RequestValidationService
         return $errors;
     }
 
-
     /**
      * @param array<mixed> $data
      */
     private function hasStringKeysOnly(array $data): bool
     {
         return !array_is_list($data) && array_filter(array_keys($data), 'is_string') === array_keys($data);
+    }
+
+    /**
+     * Validate pagination parameters from request.
+     *
+     * @return array{success: bool, page?: int, limit?: int, errors?: array<string, string>}
+     */
+    public function validatePaginationParams(Request $request): array
+    {
+        $errors = [];
+
+        $page = $request->query->get('page', '1');
+        $limit = $request->query->get('limit', '10');
+
+        // Validate page parameter
+        if (!ctype_digit($page) || (int) $page < 1) {
+            $errors['page'] = 'Page must be a positive integer';
+        }
+
+        // Validate limit parameter
+        if (!ctype_digit($limit) || (int) $limit < 1 || (int) $limit > 50) {
+            $errors['limit'] = 'Limit must be a positive integer between 1 and 50';
+        }
+
+        if (!empty($errors)) {
+            return ['success' => false, 'errors' => $errors];
+        }
+
+        return [
+            'success' => true,
+            'page' => (int) $page,
+            'limit' => (int) $limit,
+        ];
     }
 }

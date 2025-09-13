@@ -1,19 +1,46 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Container, Row, Col, Card, Button, Table, Badge, Spinner, Alert } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Container, Row, Col, Card, Button, Spinner, Alert, Table, Badge, Form } from 'react-bootstrap';
+import { Link, useNavigate } from 'react-router-dom';
 import VehicleStore from '../../stores/VehicleStore';
+import Pagination from '../common/Pagination';
 
 const MyVehicles = observer(() => {
-    useEffect(() => {
-        VehicleStore.loadMyVehicles();
-        return () => VehicleStore.clearMessages();
-    }, []);
+    const navigate = useNavigate();
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
 
-    const handleDelete = async (id, title) => {
-        if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
-            await VehicleStore.deleteVehicle(id);
+    useEffect(() => {
+        VehicleStore.loadMyVehicles(1, pageSize);
+        return () => VehicleStore.clearMessages();
+    }, [pageSize]);
+
+    const handleDelete = async (id, vehicleName) => {
+        if (window.confirm(`Are you sure you want to delete "${vehicleName}"? This action cannot be undone.`)) {
+            const result = await VehicleStore.deleteVehicle(id);
+            if (result.success) {
+                // Reload current page or go to previous page if current page is empty
+                const pagination = VehicleStore.pagination.myVehicles;
+                if (pagination && VehicleStore.myVehicles.length === 1 && currentPage > 1) {
+                    setCurrentPage(currentPage - 1);
+                    VehicleStore.loadMyVehicles(currentPage - 1, pageSize);
+                } else {
+                    VehicleStore.loadMyVehicles(currentPage, pageSize);
+                }
+            }
         }
+    };
+
+    const handlePageChange = async (page) => {
+        setCurrentPage(page);
+        await VehicleStore.loadMyVehicles(page, pageSize);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handlePageSizeChange = (newPageSize) => {
+        setPageSize(newPageSize);
+        setCurrentPage(1);
+        VehicleStore.loadMyVehicles(1, newPageSize);
     };
 
     const formatPrice = (price) => {
@@ -26,7 +53,7 @@ const MyVehicles = observer(() => {
     const getStockBadge = (quantity) => {
         if (quantity === 0) {
             return <Badge bg="danger">Out of Stock</Badge>;
-        } else if (quantity <= 5) {
+        } else if (quantity < 5) {
             return <Badge bg="warning">Low Stock ({quantity})</Badge>;
         } else {
             return <Badge bg="success">In Stock ({quantity})</Badge>;
@@ -39,15 +66,18 @@ const MyVehicles = observer(() => {
                 <Col>
                     <div className="d-flex justify-content-between align-items-center mb-4">
                         <h2>My Vehicles</h2>
-                        <Button as={Link} to="/vehicles/new" variant="primary">
-                            <i className="bi bi-plus-lg me-1"></i>
+                        <Button 
+                            variant="primary" 
+                            as={Link} 
+                            to="/vehicles/new"
+                        >
+                            <i className="bi bi-plus-circle me-2"></i>
                             Add New Vehicle
                         </Button>
                     </div>
                 </Col>
             </Row>
 
-            {/* Messages */}
             {VehicleStore.error && (
                 <Alert variant="danger" dismissible onClose={() => VehicleStore.clearMessages()}>
                     {VehicleStore.error}
@@ -72,170 +102,131 @@ const MyVehicles = observer(() => {
                     {VehicleStore.myVehicles.length === 0 ? (
                         <Card className="text-center py-5">
                             <Card.Body>
-                                <i className="bi bi-box fs-1 text-muted mb-3 d-block"></i>
-                                <h4>No vehicles yet</h4>
+                                <i className="bi bi-car-front fs-1 text-muted mb-3 d-block"></i>
+                                <h4>No vehicles found</h4>
                                 <p className="text-muted mb-4">
-                                    You haven't created any vehicles yet. Start by adding your first vehicle!
+                                    You haven't added any vehicles yet. Start by adding your first vehicle!
                                 </p>
-                                <Button as={Link} to="/vehicles/new" variant="primary">
-                                    <i className="bi bi-plus-lg me-1"></i>
+                                <Button 
+                                    variant="primary" 
+                                    as={Link} 
+                                    to="/vehicles/new"
+                                >
+                                    <i className="bi bi-plus-circle me-2"></i>
                                     Add Your First Vehicle
                                 </Button>
                             </Card.Body>
                         </Card>
                     ) : (
-                        <Row>
-                            {/* Desktop Table View */}
-                            <Col className="d-none d-md-block">
-                                <Card>
-                                    <Card.Body className="p-0">
-                                        <Table responsive hover className="mb-0">
-                                            <thead className="table-light">
-                                            <tr>
-                                                <th>Vehicle</th>
-                                                <th>Type</th>
-                                                <th>Price</th>
-                                                <th>Stock</th>
-                                                <th>Followers</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                            </thead>
-                                            <tbody>
-                                            {VehicleStore.myVehicles.map(vehicle => (
-                                                <tr key={vehicle.id}>
-                                                    <td>
-                                                        <div className="d-flex align-items-center">
-                                                            {vehicle.imageUrl && (
-                                                                <img
-                                                                    src={vehicle.imageUrl}
-                                                                    alt={vehicle.title}
-                                                                    className="rounded me-2"
-                                                                    style={{ width: '50px', height: '50px', objectFit: 'cover' }}
-                                                                />
-                                                            )}
-                                                            <div>
-                                                                <div className="fw-bold">{vehicle.title}</div>
-                                                                {vehicle.brand && vehicle.model && (
-                                                                    <small className="text-muted">
-                                                                        {vehicle.brand} {vehicle.model}
-                                                                    </small>
-                                                                )}
+                        <>
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <p className="text-muted mb-0">
+                                        {VehicleStore.pagination.myVehicles?.totalResults || VehicleStore.myVehicles.length} vehicle
+                                        {(VehicleStore.pagination.myVehicles?.totalResults || VehicleStore.myVehicles.length) !== 1 ? 's' : ''} total
+                                    </p>
+                                </div>
+                                <div className="d-flex align-items-center">
+                                    <span className="me-2 text-muted">Show:</span>
+                                    <Form.Select 
+                                        size="sm" 
+                                        style={{ width: 'auto' }}
+                                        value={pageSize}
+                                        onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
+                                    >
+                                        <option value={5}>5 per page</option>
+                                        <option value={10}>10 per page</option>
+                                        <option value={25}>25 per page</option>
+                                        <option value={50}>50 per page</option>
+                                    </Form.Select>
+                                </div>
+                            </div>
+
+                            <Card>
+                                <Table responsive hover className="mb-0">
+                                    <thead className="table-light">
+                                        <tr>
+                                            <th>Vehicle</th>
+                                            <th>Type</th>
+                                            <th>Price</th>
+                                            <th>Stock</th>
+                                            <th>Followers</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {VehicleStore.myVehicles.map(vehicle => (
+                                            <tr key={vehicle.id}>
+                                                <td>
+                                                    <div className="d-flex align-items-center">
+                                                        <div>
+                                                            <div className="fw-bold">
+                                                                {vehicle.brand} {vehicle.model}
                                                             </div>
+                                                            <small className="text-muted">
+                                                                Year: {vehicle.year}
+                                                            </small>
                                                         </div>
-                                                    </td>
-                                                    <td>
-                                                        <Badge bg="secondary">
-                                                            {vehicle.type?.charAt(0).toUpperCase() + vehicle.type?.slice(1)}
-                                                        </Badge>
-                                                    </td>
-                                                    <td className="fw-bold">{formatPrice(vehicle.price)}</td>
-                                                    <td>{getStockBadge(vehicle.quantity)}</td>
-                                                    <td>
-                                                        <i className="bi bi-heart me-1"></i>
-                                                        {vehicle.followersCount || 0}
-                                                    </td>
-                                                    <td>
-                                                        <div className="d-flex gap-1">
-                                                            <Button
-                                                                as={Link}
-                                                                to={`/vehicles/${vehicle.id}`}
-                                                                variant="outline-primary"
-                                                                size="sm"
-                                                                title="View"
-                                                            >
-                                                                <i className="bi bi-eye"></i>
-                                                            </Button>
-                                                            <Button
-                                                                as={Link}
-                                                                to={`/vehicles/${vehicle.id}/edit`}
-                                                                variant="outline-secondary"
-                                                                size="sm"
-                                                                title="Edit"
-                                                            >
-                                                                <i className="bi bi-pencil"></i>
-                                                            </Button>
-                                                            <Button
-                                                                variant="outline-danger"
-                                                                size="sm"
-                                                                title="Delete"
-                                                                onClick={() => handleDelete(vehicle.id, vehicle.title)}
-                                                                disabled={VehicleStore.isLoading}
-                                                            >
-                                                                <i className="bi bi-trash"></i>
-                                                            </Button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                            </tbody>
-                                        </Table>
-                                    </Card.Body>
-                                </Card>
-                            </Col>
-
-                            {/* Mobile Card View */}
-                            <Col className="d-md-none">
-                                {VehicleStore.myVehicles.map(vehicle => (
-                                    <Card key={vehicle.id} className="mb-3">
-                                        <Card.Body>
-                                            <div className="d-flex justify-content-between align-items-start mb-2">
-                                                <Badge bg="secondary">
-                                                    {vehicle.type?.charAt(0).toUpperCase() + vehicle.type?.slice(1)}
-                                                </Badge>
-                                                {getStockBadge(vehicle.quantity)}
-                                            </div>
-
-                                            <Card.Title className="h5 mb-2">{vehicle.title}</Card.Title>
-
-                                            {vehicle.brand && vehicle.model && (
-                                                <p className="text-muted mb-2">
-                                                    {vehicle.brand} {vehicle.model}
-                                                </p>
-                                            )}
-
-                                            <div className="d-flex justify-content-between align-items-center mb-3">
-                                                <strong className="text-primary fs-5">{formatPrice(vehicle.price)}</strong>
-                                                <small className="text-muted">
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <Badge bg="secondary" className="text-capitalize">
+                                                        {vehicle.type}
+                                                    </Badge>
+                                                </td>
+                                                <td className="fw-bold">
+                                                    {formatPrice(vehicle.price)}
+                                                </td>
+                                                <td>
+                                                    {getStockBadge(vehicle.quantity)}
+                                                </td>
+                                                <td>
                                                     <i className="bi bi-heart me-1"></i>
-                                                    {vehicle.followersCount || 0} followers
-                                                </small>
-                                            </div>
+                                                    {vehicle.followersCount || 0}
+                                                </td>
+                                                <td>
+                                                    <div className="btn-group btn-group-sm">
+                                                        <Button
+                                                            variant="outline-primary"
+                                                            size="sm"
+                                                            onClick={() => navigate(`/vehicles/${vehicle.id}`)}
+                                                            title="View Details"
+                                                        >
+                                                            <i className="bi bi-eye"></i>
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline-secondary"
+                                                            size="sm"
+                                                            onClick={() => navigate(`/vehicles/${vehicle.id}/edit`)}
+                                                            title="Edit Vehicle"
+                                                        >
+                                                            <i className="bi bi-pencil"></i>
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline-danger"
+                                                            size="sm"
+                                                            onClick={() => handleDelete(vehicle.id, `${vehicle.brand} ${vehicle.model}`)}
+                                                            title="Delete Vehicle"
+                                                        >
+                                                            <i className="bi bi-trash"></i>
+                                                        </Button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </Table>
+                            </Card>
 
-                                            <div className="d-flex gap-1">
-                                                <Button
-                                                    as={Link}
-                                                    to={`/vehicles/${vehicle.id}`}
-                                                    variant="outline-primary"
-                                                    size="sm"
-                                                    className="flex-fill"
-                                                >
-                                                    <i className="bi bi-eye me-1"></i>
-                                                    View
-                                                </Button>
-                                                <Button
-                                                    as={Link}
-                                                    to={`/vehicles/${vehicle.id}/edit`}
-                                                    variant="outline-secondary"
-                                                    size="sm"
-                                                    className="flex-fill"
-                                                >
-                                                    <i className="bi bi-pencil me-1"></i>
-                                                    Edit
-                                                </Button>
-                                                <Button
-                                                    variant="outline-danger"
-                                                    size="sm"
-                                                    onClick={() => handleDelete(vehicle.id, vehicle.title)}
-                                                    disabled={VehicleStore.isLoading}
-                                                >
-                                                    <i className="bi bi-trash"></i>
-                                                </Button>
-                                            </div>
-                                        </Card.Body>
-                                    </Card>
-                                ))}
-                            </Col>
-                        </Row>
+                            {/* Pagination */}
+                            {VehicleStore.pagination.myVehicles && (
+                                <Pagination
+                                    paginationData={VehicleStore.pagination.myVehicles}
+                                    onPageChange={handlePageChange}
+                                    className="mt-4"
+                                />
+                            )}
+                        </>
                     )}
                 </>
             )}

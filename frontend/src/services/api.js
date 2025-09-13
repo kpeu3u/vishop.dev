@@ -157,16 +157,16 @@ export const profileAPI = {
 
 // Vehicle API methods
 export const vehicleAPI = {
-    getVehicles: async (filters = {}) => {
+    getVehicles: async (params = {}) => {
         try {
-            const params = new URLSearchParams();
-            Object.keys(filters).forEach(key => {
-                if (filters[key] !== '' && filters[key] !== null && filters[key] !== undefined) {
-                    params.append(key, filters[key]);
+            const queryParams = new URLSearchParams();
+            Object.keys(params).forEach(key => {
+                if (params[key] !== '' && params[key] !== null && params[key] !== undefined) {
+                    queryParams.append(key, params[key]);
                 }
             });
 
-            const response = await api.get(`/api/vehicles${params.toString() ? `?${params.toString()}` : ''}`);
+            const response = await api.get(`/api/vehicles${queryParams.toString() ? `?${queryParams.toString()}` : ''}`);
             return response.data;
         } catch (error) {
             throw {
@@ -180,9 +180,14 @@ export const vehicleAPI = {
         }
     },
 
-    searchVehicles: async (searchTerm) => {
+    searchVehicles: async (searchTerm, page = 1, pageSize = 10) => {
         try {
-            const response = await api.get(`/api/vehicles/search?q=${encodeURIComponent(searchTerm)}`);
+            const params = new URLSearchParams({
+                q: searchTerm,
+                page: page.toString(),
+                limit: pageSize.toString()
+            });
+            const response = await api.get(`/api/vehicles/search?${params.toString()}`);
             return response.data;
         } catch (error) {
             throw {
@@ -262,9 +267,13 @@ export const vehicleAPI = {
         }
     },
 
-    getMyVehicles: async () => {
+    getMyVehicles: async (page = 1, pageSize = 10) => {
         try {
-            const response = await api.get('/api/vehicles/my-vehicles');
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: pageSize.toString()
+            });
+            const response = await api.get(`/api/vehicles/my-vehicles?${params.toString()}`);
             return response.data;
         } catch (error) {
             throw {
@@ -310,9 +319,13 @@ export const vehicleAPI = {
         }
     },
 
-    getFollowedVehicles: async () => {
+    getFollowedVehicles: async (page = 1, pageSize = 10) => {
         try {
-            const response = await api.get('/api/vehicles/followed');
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: pageSize.toString()
+            });
+            const response = await api.get(`/api/vehicles/followed?${params.toString()}`);
             return response.data;
         } catch (error) {
             throw {

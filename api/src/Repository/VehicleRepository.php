@@ -9,6 +9,7 @@ use App\Entity\Trailer;
 use App\Entity\Truck;
 use App\Entity\User;
 use App\Entity\Vehicle;
+use App\Pagination\Paginator;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
@@ -46,21 +47,18 @@ class VehicleRepository extends ServiceEntityRepository
         }
     }
 
-    /**
-     * @return Vehicle[] Returns an array of Vehicle objects
-     */
-    public function findByMerchant(User $merchant): array
+    public function findByMerchant(User $merchant, int $pageSize = Paginator::PAGE_SIZE): Paginator
     {
-        return $this->createQueryBuilder('p')
+        $qb = $this->createQueryBuilder('p')
             ->andWhere('p.merchant = :merchant')
             ->setParameter('merchant', $merchant)
-            ->orderBy('p.createdAt', 'DESC')
-            ->getQuery()
-            ->getResult();
+            ->orderBy('p.createdAt', 'DESC');
+
+        return new Paginator($qb, $pageSize);
     }
 
     /**
-     * @return Vehicle[] Returns an array of available vehicles (quantity > 0)
+     * @return Vehicle[]
      */
     public function findAvailableVehicles(): array
     {
@@ -73,60 +71,50 @@ class VehicleRepository extends ServiceEntityRepository
 
     /**
      * Returns vehicles followed by a specific user.
-     *
-     * @return Vehicle[]
      */
-    public function findFollowedByUser(User $user): array
+    public function findFollowedByUser(User $user, int $pageSize = Paginator::PAGE_SIZE): Paginator
     {
-        /** @var Vehicle[] $result */
-        $result = $this->createQueryBuilder('p')
+        $qb = $this->createQueryBuilder('p')
             ->innerJoin('p.follows', 'f')
             ->andWhere('f.user = :user')
             ->setParameter('user', $user)
-            ->orderBy('f.followedAt', 'DESC')
-            ->getQuery()
-            ->getResult();
+            ->orderBy('f.followedAt', 'DESC');
 
-        return $result;
+        return new Paginator($qb, $pageSize);
     }
 
     /**
      * Find vehicles with filters.
      *
      * @param array<string, mixed> $filters
-     *
-     * @return Vehicle[]
      */
-    public function findWithFilters(array $filters): array
+    public function findWithFilters(array $filters = [], int $pageSize = Paginator::PAGE_SIZE): Paginator
     {
         $qb = $this->createQueryBuilder('p');
 
         $this->applyCriteria($qb, $filters);
 
-        return $qb->orderBy('p.createdAt', 'DESC')
-            ->getQuery()
-            ->getResult();
+        $qb->orderBy('p.createdAt', 'DESC');
+
+        return new Paginator($qb, $pageSize);
     }
 
     /**
      * Search vehicles by brand and model.
-     *
-     * @return Vehicle[]
      */
-    public function searchVehicles(string $searchTerm): array
+    public function searchVehicles(string $searchTerm, int $pageSize = Paginator::PAGE_SIZE): Paginator
     {
         $qb = $this->createQueryBuilder('p');
 
-        return $qb
-            ->where($qb->expr()->orX(
-                $qb->expr()->like('LOWER(p.brand)', ':searchTerm'),
-                $qb->expr()->like('LOWER(p.model)', ':searchTerm')
-            ))
+        $qb->where($qb->expr()->orX(
+            $qb->expr()->like('LOWER(p.brand)', ':searchTerm'),
+            $qb->expr()->like('LOWER(p.model)', ':searchTerm')
+        ))
             ->andWhere('p.quantity > 0')
             ->setParameter('searchTerm', '%' . mb_strtolower($searchTerm) . '%')
-            ->orderBy('p.createdAt', 'DESC')
-            ->getQuery()
-            ->getResult();
+            ->orderBy('p.createdAt', 'DESC');
+
+        return new Paginator($qb, $pageSize);
     }
 
     /**
