@@ -170,6 +170,7 @@ class VehicleRepository extends ServiceEntityRepository
             $qb->andWhere('p.quantity > 0');
         }
     }
+
     /**
      * Get the vehicle class name by type string.
      */
@@ -184,5 +185,4 @@ class VehicleRepository extends ServiceEntityRepository
             default => throw new \InvalidArgumentException('Unknown vehicle type: ' . $type),
         };
     }
-
 }

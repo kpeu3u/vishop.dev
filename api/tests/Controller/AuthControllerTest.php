@@ -24,12 +24,11 @@ final class AuthControllerTest extends WebTestCase
         $contentType = $response->headers->get('content-type');
         if ($contentType && str_contains($contentType, 'application/json') && $response->getContent()) {
             $responseData = json_decode($response->getContent(), true);
-            if (is_array($responseData) && isset($responseData['message'])) {
+            if (\is_array($responseData) && isset($responseData['message'])) {
                 $this->assertSame('Login endpoint - should not reach here', $responseData['message']);
             }
         }
     }
-
 
     public function testLoginWithValidCredentialsReturnsJwtToken(): void
     {

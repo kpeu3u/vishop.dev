@@ -43,7 +43,6 @@ class VehicleService extends AbstractService
         }
     }
 
-
     /**
      * Handle vehicle search from request.
      *

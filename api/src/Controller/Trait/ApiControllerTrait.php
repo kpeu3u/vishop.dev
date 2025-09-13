@@ -28,6 +28,7 @@ trait ApiControllerTrait
     private function createApiResponse(array $result, int $successStatusCode = 200): JsonResponse
     {
         $statusCode = $this->determineStatusCode($result, $successStatusCode);
+
         return $this->json($result, $statusCode);
     }
 
@@ -43,11 +44,11 @@ trait ApiControllerTrait
         }
 
         $error = $result['error'] ?? '';
-        if (is_string($error) && str_contains(strtolower($error), 'not found')) {
+        if (\is_string($error) && str_contains(mb_strtolower($error), 'not found')) {
             return 404;
         }
 
-        if (isset($result['errors']) && is_array($result['errors'])) {
+        if (isset($result['errors']) && \is_array($result['errors'])) {
             return 422;
         }
 

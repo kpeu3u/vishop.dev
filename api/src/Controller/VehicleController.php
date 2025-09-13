@@ -33,6 +33,7 @@ class VehicleController extends AbstractController
         }
 
         $result = $this->vehicleService->handleVehicleList($request);
+
         return $this->createApiResponse($result);
     }
 
@@ -45,6 +46,7 @@ class VehicleController extends AbstractController
         }
 
         $result = $this->vehicleService->handleVehicleSearch($request);
+
         return $this->createApiResponse($result);
     }
 
@@ -66,7 +68,7 @@ class VehicleController extends AbstractController
             return $this->createApiResponse($jsonValidation, 400);
         }
 
-        $dataValidation = $this->requestValidationService->validateVehicleCreationData($jsonValidation['data']);
+        $dataValidation = $this->requestValidationService->validateVehicleCreationData($jsonValidation['data']??[]);
         if (!$dataValidation['success']) {
             return $this->createApiResponse($dataValidation, 400);
         }
@@ -91,7 +93,7 @@ class VehicleController extends AbstractController
             return $this->createApiResponse($jsonValidation, 400);
         }
 
-        $dataValidation = $this->requestValidationService->validateVehicleUpdateData($jsonValidation['data']);
+        $dataValidation = $this->requestValidationService->validateVehicleUpdateData($jsonValidation['data']??[]);
         if (!$dataValidation['success']) {
             return $this->createApiResponse($dataValidation, 400);
         }

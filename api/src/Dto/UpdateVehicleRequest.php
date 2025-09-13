@@ -33,5 +33,4 @@ class UpdateVehicleRequest
     #[Assert\PositiveOrZero(message: 'Permitted max mass must be zero or positive')]
     #[Assert\Type(type: 'numeric', message: 'Permitted max mass must be a number')]
     public string|int|float|null $permittedMaxMass = null;
-
 }
